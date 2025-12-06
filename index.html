@@ -421,7 +421,7 @@
                         
                         <div class="relative z-10">
                             <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-sm font-semibold uppercase tracking-wider opacity-90">Saldo Total</h3>
+                                <h3 id="balance-label" class="text-sm font-semibold uppercase tracking-wider opacity-90">Saldo Total</h3>
                                 <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                                     <i class="fas fa-wallet text-lg"></i>
                                 </div>
@@ -472,6 +472,34 @@
                         </div>
                     </article>
                 </div>
+
+                <!-- Credit Cards Section -->
+                <section id="cards-section" class="mb-6">
+                    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6">
+                        <div class="flex items-center justify-between mb-5">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-credit-card text-blue-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">Meus Cartões</h3>
+                                    <p class="text-xs text-slate-500">Gerenciar cartões de crédito</p>
+                                </div>
+                            </div>
+                            <button id="btn-new-card" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all text-sm font-semibold">
+                                <i class="fas fa-plus mr-2"></i>Novo Cartão
+                            </button>
+                        </div>
+                        
+                        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Cards will be rendered here -->
+                            <div class="col-span-full p-8 text-center text-slate-400">
+                                <i class="fas fa-credit-card text-4xl mb-2"></i>
+                                <p class="text-sm">Nenhum cartão cadastrado</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 <!-- Charts Section -->
                 <section id="charts-section" class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
@@ -772,6 +800,42 @@
                         </select>
                     </div>
 
+                    <!-- Recurrence Section -->
+                    <div class="border-t border-slate-200 pt-4">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                id="txn-recurring"
+                                class="w-5 h-5 text-emerald-500 border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
+                            />
+                            <span class="text-sm font-medium text-slate-700">
+                                <i class="fas fa-sync-alt mr-1 text-slate-400"></i>Repetir Transação?
+                            </span>
+                        </label>
+                        
+                        <div id="recurring-options" class="hidden mt-4 space-y-3 pl-8 border-l-2 border-emerald-200">
+                            <div>
+                                <label for="txn-recurring-months" class="block text-sm font-medium text-slate-700 mb-2">
+                                    <i class="fas fa-calendar-alt mr-1 text-slate-400"></i>Repetir por:
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <input 
+                                        type="number" 
+                                        id="txn-recurring-months"
+                                        min="2"
+                                        max="120"
+                                        value="12"
+                                        class="w-24 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                                    />
+                                    <span class="text-sm text-slate-600">meses</span>
+                                </div>
+                                <p id="recurring-info" class="text-xs text-slate-500 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>Serão criadas transações até <span id="recurring-end-date" class="font-semibold">—</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Error Message -->
                     <div id="modal-message" class="hidden p-3 rounded-lg text-sm">
                         <span id="modal-message-text"></span>
@@ -959,6 +1023,203 @@
             </div>
         </div>
 
+        <!-- Card Modal -->
+        <div id="modal-card" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">
+                        <i class="fas fa-credit-card mr-2 text-blue-500"></i>
+                        <span id="card-modal-title">Novo Cartão de Crédito</span>
+                    </h2>
+                    <button id="btn-close-card-modal" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Card Form -->
+                <form id="form-card" class="space-y-5">
+                    
+                    <!-- Card Name -->
+                    <div>
+                        <label for="card-name" class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-signature mr-1 text-slate-400"></i>Nome do Cartão
+                        </label>
+                        <input 
+                            type="text" 
+                            id="card-name" 
+                            placeholder="Ex: Nubank, Inter, C6 Bank..."
+                            maxlength="30"
+                            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            required
+                        />
+                    </div>
+
+                    <!-- Limit -->
+                    <div>
+                        <label for="card-limit" class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-dollar-sign mr-1 text-slate-400"></i>Limite Total
+                        </label>
+                        <input 
+                            type="number" 
+                            id="card-limit" 
+                            placeholder="0,00"
+                            step="0.01"
+                            min="0"
+                            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            required
+                        />
+                    </div>
+
+                    <!-- Closing and Due Days -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="card-closing-day" class="block text-sm font-medium text-slate-700 mb-2">
+                                <i class="fas fa-calendar-check mr-1 text-slate-400"></i>Dia Fechamento
+                            </label>
+                            <input 
+                                type="number" 
+                                id="card-closing-day" 
+                                placeholder="15"
+                                min="1"
+                                max="31"
+                                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-center font-semibold"
+                                required
+                            />
+                            <p class="text-xs text-slate-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>Melhor dia para comprar: dia seguinte
+                            </p>
+                        </div>
+                        <div>
+                            <label for="card-due-day" class="block text-sm font-medium text-slate-700 mb-2">
+                                <i class="fas fa-calendar-times mr-1 text-slate-400"></i>Dia Vencimento
+                            </label>
+                            <input 
+                                type="number" 
+                                id="card-due-day" 
+                                placeholder="25"
+                                min="1"
+                                max="31"
+                                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-center font-semibold"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Color Selector (Bank Presets) -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-3">
+                            <i class="fas fa-palette mr-1 text-slate-400"></i>Cor do Cartão (Escolha seu banco)
+                        </label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#820AD1" data-name="Nubank" style="background: #820AD1;" title="Roxo Nubank">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Nu</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#FF7A00" data-name="Inter" style="background: #FF7A00;" title="Laranja Inter">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Inter</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#EC0000" data-name="Santander" style="background: #EC0000;" title="Vermelho Santander">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Sant</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#004DCF" data-name="Itaú" style="background: #004DCF;" title="Azul Itaú">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Itaú</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#111111" data-name="Black" style="background: #111111;" title="Preto Carbon">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Black</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#00C65E" data-name="C6" style="background: #00C65E;" title="Verde C6">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">C6</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#F4C20D" data-name="Banco do Brasil" style="background: #F4C20D;" title="Amarelo BB">
+                                <span class="absolute inset-0 flex items-center justify-center text-slate-700 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">BB</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                            <button type="button" class="color-selector group relative w-full aspect-square rounded-xl transition-all hover:scale-110" data-color="#6B7280" data-name="Cinza" style="background: #6B7280;" title="Cinza Padrão">
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">Outro</span>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full hidden items-center justify-center ring-2 ring-blue-500">
+                                    <i class="fas fa-check text-blue-500 text-xs"></i>
+                                </div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="card-color" value="#820AD1" />
+                    </div>
+
+                    <!-- Brand -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-building-columns mr-1 text-slate-400"></i>Bandeira
+                        </label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="card-brand" value="mastercard" class="peer sr-only" checked />
+                                <div class="p-3 border-2 border-slate-200 rounded-xl text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50">
+                                    <i class="fab fa-cc-mastercard text-3xl text-slate-600 mb-1"></i>
+                                    <p class="text-xs font-medium text-slate-700">Mastercard</p>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="card-brand" value="visa" class="peer sr-only" />
+                                <div class="p-3 border-2 border-slate-200 rounded-xl text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50">
+                                    <i class="fab fa-cc-visa text-3xl text-slate-600 mb-1"></i>
+                                    <p class="text-xs font-medium text-slate-700">Visa</p>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="card-brand" value="elo" class="peer sr-only" />
+                                <div class="p-3 border-2 border-slate-200 rounded-xl text-center transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50">
+                                    <i class="fas fa-credit-card text-3xl text-slate-600 mb-1"></i>
+                                    <p class="text-xs font-medium text-slate-700">Elo</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="card-modal-message" class="hidden p-3 rounded-lg text-sm">
+                        <span id="card-modal-message-text"></span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 pt-2">
+                        <button 
+                            type="button" 
+                            id="btn-cancel-card"
+                            class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                        >
+                            <i class="fas fa-save mr-2"></i>Salvar Cartão
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <!-- Firebase SDK v10 (Modular) -->
@@ -1046,14 +1307,17 @@
             },
             editingTransaction: null,  // Holds transaction being edited
             budgets: {},  // { categoryId: monthlyLimit }
-            currentDate: new Date()  // Current month/year being viewed
+            currentDate: new Date(),  // Current month/year being viewed
+            cards: [],  // Array of credit cards
+            editingCard: null  // Holds card being edited
         };
 
         // Store unsubscribe functions for cleanup
         const listeners = {
             transactions: null,
             categories: null,
-            budgets: null
+            budgets: null,
+            cards: null
         };
 
         // ============================================
@@ -1094,6 +1358,7 @@
                 cardBalance: document.getElementById('card-balance'),
                 cardIncome: document.getElementById('card-income'),
                 cardExpense: document.getElementById('card-expense'),
+                balanceLabel: document.getElementById('balance-label'),
                 
                 // Transactions
                 transactionsContainer: document.getElementById('transactions-container'),
@@ -1117,6 +1382,10 @@
                 btnCancelTransaction: document.getElementById('btn-cancel-transaction'),
                 modalMessage: document.getElementById('modal-message'),
                 modalMessageText: document.getElementById('modal-message-text'),
+                txnRecurring: document.getElementById('txn-recurring'),
+                recurringOptions: document.getElementById('recurring-options'),
+                txnRecurringMonths: document.getElementById('txn-recurring-months'),
+                recurringEndDate: document.getElementById('recurring-end-date'),
                 
                 // Category Modal
                 modalCategory: document.getElementById('modal-category'),
@@ -1131,7 +1400,17 @@
                 budgetList: document.getElementById('budget-list'),
                 btnCloseBudgetModal: document.getElementById('btn-close-budget-modal'),
                 btnCancelBudget: document.getElementById('btn-cancel-budget'),
-                btnSaveBudgets: document.getElementById('btn-save-budgets')
+                btnSaveBudgets: document.getElementById('btn-save-budgets'),
+                
+                // Card Modal
+                modalCard: document.getElementById('modal-card'),
+                formCard: document.getElementById('form-card'),
+                btnCloseCardModal: document.getElementById('btn-close-card-modal'),
+                btnCancelCard: document.getElementById('btn-cancel-card'),
+                cardModalMessage: document.getElementById('card-modal-message'),
+                cardModalMessageText: document.getElementById('card-modal-message-text'),
+                cardsContainer: document.getElementById('cards-container'),
+                btnNewCard: document.getElementById('btn-new-card')
             },
 
             /**
@@ -1328,6 +1607,11 @@
                     const radioButton = document.querySelector(`input[name="type"][value="${transaction.type}"]`);
                     if (radioButton) radioButton.checked = true;
                     
+                    // Hide recurrence for editing (only for new transactions)
+                    this.elements.txnRecurring.checked = false;
+                    this.elements.recurringOptions.classList.add('hidden');
+                    this.elements.txnRecurring.closest('.border-t').classList.add('hidden');
+                    
                 } else {
                     // CREATE MODE
                     state.editingTransaction = null;
@@ -1344,6 +1628,12 @@
                     
                     // Set today's date
                     document.getElementById('txn-date').valueAsDate = new Date();
+                    
+                    // Show recurrence section and reset
+                    this.elements.txnRecurring.closest('.border-t').classList.remove('hidden');
+                    this.elements.txnRecurring.checked = false;
+                    this.elements.recurringOptions.classList.add('hidden');
+                    this.elements.txnRecurringMonths.value = 12;
                 }
                 
                 // Focus first input
@@ -1419,26 +1709,92 @@
             },
 
             /**
-             * Update dashboard summary cards
-             * Saldo Total: All time (real cash on hand)
-             * Receitas/Despesas: Current selected month only
+             * Update dashboard summary cards - "Card Camaleão"
+             * Comportamento híbrido: Passado = Saldo Acumulado | Presente/Futuro = Resultado do Mês
+             * Receitas/Despesas: Sempre do mês selecionado
              */
             updateDashboardCards(transactions) {
-                // Total balance (all time - represents real money)
-                const totalIncome = transactions
-                    .filter(t => t.type === 'receita' && t.status === 'confirmada')
-                    .reduce((sum, t) => sum + t.value, 0);
-                
-                const totalExpense = transactions
-                    .filter(t => t.type === 'despesa' && t.status === 'confirmada')
-                    .reduce((sum, t) => sum + t.value, 0);
-                
-                const balance = totalIncome - totalExpense;
-                
-                // Current month income/expenses
                 const currentMonth = state.currentDate.getMonth();
                 const currentYear = state.currentDate.getFullYear();
                 
+                // Helper: Check if selected month is current or future
+                const now = new Date();
+                const isCurrentOrFutureMonth = (currentYear > now.getFullYear()) || 
+                                               (currentYear === now.getFullYear() && currentMonth >= now.getMonth());
+                
+                const monthNames = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                
+                let balance;
+                let labelText;
+                
+                if (isCurrentOrFutureMonth) {
+                    // CENÁRIO B: Presente/Futuro - Mostra "Resultado do Mês"
+                    const monthIncome = transactions
+                        .filter(t => {
+                            const txnDate = new Date(t.date);
+                            return t.type === 'receita' && 
+                                   t.status === 'confirmada' &&
+                                   txnDate.getMonth() === currentMonth &&
+                                   txnDate.getFullYear() === currentYear;
+                        })
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    const monthExpense = transactions
+                        .filter(t => {
+                            const txnDate = new Date(t.date);
+                            return t.type === 'despesa' && 
+                                   t.status === 'confirmada' &&
+                                   txnDate.getMonth() === currentMonth &&
+                                   txnDate.getFullYear() === currentYear;
+                        })
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    balance = monthIncome - monthExpense;
+                    labelText = `Resultado de ${monthNames[currentMonth]}`;
+                    
+                    // Update card color based on result (green = profit, red = loss)
+                    if (balance < 0) {
+                        this.elements.cardBalance.classList.remove('text-white');
+                        this.elements.cardBalance.classList.add('text-rose-100');
+                    } else {
+                        this.elements.cardBalance.classList.remove('text-rose-100');
+                        this.elements.cardBalance.classList.add('text-white');
+                    }
+                    
+                } else {
+                    // CENÁRIO A: Passado - Mostra "Saldo Acumulado até [Mês]"
+                    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+                    
+                    const historicalIncome = transactions
+                        .filter(t => t.type === 'receita' && 
+                                     t.status === 'confirmada' &&
+                                     t.date <= lastDayOfMonth.getTime())
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    const historicalExpense = transactions
+                        .filter(t => t.type === 'despesa' && 
+                                     t.status === 'confirmada' &&
+                                     t.date <= lastDayOfMonth.getTime())
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    balance = historicalIncome - historicalExpense;
+                    labelText = `Saldo em ${monthNames[currentMonth]}`;
+                    
+                    // Always white for historical balance
+                    this.elements.cardBalance.classList.remove('text-rose-100');
+                    this.elements.cardBalance.classList.add('text-white');
+                }
+                
+                // Update label (Camaleão effect)
+                this.elements.balanceLabel.textContent = labelText;
+                
+                // Update balance value
+                this.elements.cardBalance.textContent = formatCurrency(balance);
+                
+                // Current month income/expenses (always month-specific)
                 const monthIncome = transactions
                     .filter(t => {
                         const txnDate = new Date(t.date);
@@ -1459,7 +1815,6 @@
                     })
                     .reduce((sum, t) => sum + t.value, 0);
                 
-                this.elements.cardBalance.textContent = formatCurrency(balance);
                 this.elements.cardIncome.textContent = formatCurrency(monthIncome);
                 this.elements.cardExpense.textContent = formatCurrency(monthExpense);
             },
@@ -1534,13 +1889,26 @@
                                 <!-- Transaction Info -->
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <h4 class="font-bold text-slate-800 text-base truncate">${txn.description}</h4>
+                                        <h4 class="font-bold text-slate-800 text-base truncate">
+                                            ${txn.description}
+                                            ${txn.installment ? `<span class="text-xs text-slate-400 font-normal">(${txn.installment.current}/${txn.installment.total})</span>` : ''}
+                                        </h4>
                                         ${statusBadge}
                                     </div>
                                     <div class="flex items-center gap-2 text-xs text-slate-500">
                                         <span class="font-medium">${categoryName}</span>
                                         <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
                                         <span>${formatDate(txn.date)}</span>
+                                        ${txn.installment && txn.installment.current === txn.installment.total ? `
+                                        <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                        <button 
+                                            onclick="event.stopPropagation(); extendRecurrence('${txn.groupId}', '${txn.id}')" 
+                                            class="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+                                            title="Prorrogar +12 meses"
+                                        >
+                                            🔄 Prorrogar +12m
+                                        </button>
+                                        ` : ''}
                                     </div>
                                 </div>
                                 
@@ -1581,20 +1949,23 @@
                     ...state.categories.personal
                 };
                 
-                // Calculate current month spending per category
-                const now = new Date();
-                const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-                const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
+                // Calculate selected month spending per category
+                const selectedMonth = state.currentDate.getMonth();
+                const selectedYear = state.currentDate.getFullYear();
+                const selectedMonthStart = new Date(selectedYear, selectedMonth, 1).getTime();
+                const selectedMonthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59).getTime();
                 
                 const categorySpending = {};
                 const categoryCounts = {};
                 
+                // FILTRAR APENAS PELO MÊS SELECIONADO
                 state.transactions.forEach(txn => {
-                    if (txn.category) {
+                    if (txn.category && txn.date >= selectedMonthStart && txn.date <= selectedMonthEnd) {
+                        // Contar transações do mês selecionado
                         categoryCounts[txn.category] = (categoryCounts[txn.category] || 0) + 1;
                         
-                        // Only count confirmed transactions for current month
-                        if (txn.status === 'confirmada' && txn.date >= currentMonthStart && txn.date <= currentMonthEnd) {
+                        // Somar gastos apenas de transações confirmadas do mês selecionado
+                        if (txn.status === 'confirmada') {
                             if (!categorySpending[txn.category]) {
                                 categorySpending[txn.category] = 0;
                             }
@@ -1603,38 +1974,56 @@
                     }
                 });
                 
-                // Sort categories by usage (most used first)
-                const sortedCategories = Object.entries(allCategories)
-                    .map(([key, cat]) => ({
-                        key,
-                        ...cat,
-                        count: categoryCounts[key] || 0,
-                        spending: categorySpending[key] || 0
-                    }))
-                    .sort((a, b) => b.count - a.count);
+                // Criar lista SOMENTE com categorias que têm transações no mês selecionado
+                const categoriesWithTransactions = Object.keys(categoryCounts); // Apenas IDs com transações
                 
-                // Render categories
-                if (sortedCategories.length === 0) {
+                if (categoriesWithTransactions.length === 0) {
+                    // Nenhuma categoria tem transações neste mês
+                    const monthNames = [
+                        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                    ];
+                    const currentMonthName = monthNames[selectedMonth];
+                    
                     container.innerHTML = `
                         <div class="p-4 text-center text-slate-400 text-sm">
-                            <i class="fas fa-folder-open text-2xl mb-2"></i>
-                            <p>Nenhuma categoria disponível</p>
+                            <i class="fas fa-calendar-times text-2xl mb-2"></i>
+                            <p class="font-medium">Nenhuma transação</p>
+                            <p class="text-xs mt-1">em ${currentMonthName}</p>
                         </div>
                     `;
                     return;
                 }
                 
+                // Mapear apenas as categorias que têm transações
+                const sortedCategories = categoriesWithTransactions
+                    .map(key => {
+                        const cat = allCategories[key];
+                        if (!cat) return null; // Categoria não existe mais
+                        
+                        return {
+                            key,
+                            ...cat,
+                            count: categoryCounts[key],
+                            spending: categorySpending[key] || 0
+                        };
+                    })
+                    .filter(cat => cat !== null) // Remove categorias deletadas
+                    .sort((a, b) => b.count - a.count); // Ordena por mais usadas
+                
+                // Renderizar as categorias (já filtradas)
                 container.innerHTML = sortedCategories.map(cat => {
                     const isPersonal = state.categories.personal && state.categories.personal[cat.key];
                     const badgeColor = cat.count > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400';
                     const isActive = state.filters.category === cat.key;
                     const activeClasses = isActive ? 'ring-2 ring-emerald-500 bg-slate-50 shadow-sm' : '';
                     
-                    // Budget progress bar logic
+                    // Budget progress bar logic - APENAS PARA O MÊS SELECIONADO
                     const budget = state.budgets[cat.key];
                     let progressBarHTML = '';
                     
-                    if (budget && budget > 0) {
+                    if (budget && budget > 0 && cat.spending > 0) {
+                        // cat.spending já foi calculado apenas para o mês selecionado
                         const spent = cat.spending;
                         const percentage = Math.min((spent / budget) * 100, 100);
                         
@@ -1657,6 +2046,16 @@
                                 </div>
                                 <div class="w-full bg-slate-200 rounded-full h-1 overflow-hidden">
                                     <div class="${barColor} h-full rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (budget && budget > 0 && cat.spending === 0) {
+                        // Mostra meta disponível sem gastos no mês
+                        progressBarHTML = `
+                            <div class="mt-2 text-[10px] text-slate-400">
+                                <div class="flex items-center justify-between">
+                                    <span>Meta: R$ ${budget.toFixed(2)}</span>
+                                    <span class="font-semibold text-emerald-600">0%</span>
                                 </div>
                             </div>
                         `;
@@ -2093,9 +2492,11 @@
          * Save transaction (Create or Update)
          * @param {Object} transactionData - Transaction details
          * @param {string} transactionId - Transaction ID (for updates, null for creates)
-         * @returns {Promise<string>} Transaction ID
+         * @param {boolean} isRecurring - Whether to create recurring transactions
+         * @param {number} recurringMonths - Number of months to repeat
+         * @returns {Promise<string>} Transaction ID or Group ID
          */
-        async function saveTransaction(transactionData, transactionId = null) {
+        async function saveTransaction(transactionData, transactionId = null, isRecurring = false, recurringMonths = 12) {
             try {
                 // Validate user is logged in
                 if (!auth.currentUser) {
@@ -2116,7 +2517,7 @@
                 }
                 
                 if (transactionId) {
-                    // UPDATE MODE
+                    // UPDATE MODE (never recurring, just update single transaction)
                     const updates = {
                         value: Number(transactionData.value),
                         type: transactionData.type,
@@ -2132,8 +2533,61 @@
                     logger.log('✅ Transação atualizada:', transactionId);
                     return transactionId;
                     
+                } else if (isRecurring && recurringMonths > 1) {
+                    // CREATE MODE - RECURRING TRANSACTIONS
+                    const groupId = crypto.randomUUID();
+                    const transactionsRef = ref(database, 'transactions');
+                    const baseDate = new Date(transactionData.date);
+                    
+                    logger.log(`🔄 Criando ${recurringMonths} transações recorrentes...`);
+                    
+                    /**
+                     * Helper: Add months safely (handles leap years and month overflow)
+                     * Example: 31/Jan + 1 month = 28/Feb (or 29/Feb if leap year)
+                     */
+                    function addMonthsSafely(date, monthsToAdd) {
+                        const d = new Date(date);
+                        const originalDay = d.getDate();
+                        d.setMonth(d.getMonth() + monthsToAdd);
+                        
+                        // If day changed due to overflow (e.g., 31 Jan -> 3 Mar), 
+                        // set to last day of previous month
+                        if (d.getDate() !== originalDay) {
+                            d.setDate(0); // Go back to last day of previous month
+                        }
+                        
+                        return d;
+                    }
+                    
+                    // Create multiple transactions
+                    for (let i = 0; i < recurringMonths; i++) {
+                        // Calculate date for this installment using safe month addition
+                        const txnDate = addMonthsSafely(baseDate, i);
+                        
+                        const transaction = {
+                            userId: auth.currentUser.uid,
+                            value: Number(transactionData.value),
+                            type: transactionData.type,
+                            description: transactionData.description.trim(),
+                            category: transactionData.category,
+                            date: txnDate.getTime(),
+                            status: transactionData.status || 'confirmada',
+                            createdAt: Date.now(),
+                            groupId: groupId,
+                            installment: {
+                                current: i + 1,
+                                total: recurringMonths
+                            }
+                        };
+                        
+                        await push(transactionsRef, transaction);
+                    }
+                    
+                    logger.log(`✅ ${recurringMonths} transações recorrentes criadas com groupId: ${groupId}`);
+                    return groupId;
+                    
                 } else {
-                    // CREATE MODE
+                    // CREATE MODE - SINGLE TRANSACTION
                     const transaction = {
                         userId: auth.currentUser.uid, // CRITICAL for security rules
                         value: Number(transactionData.value),
@@ -2198,6 +2652,108 @@
             } catch (error) {
                 logger.error('❌ Erro ao excluir transação:', error);
                 alert(error.message || 'Erro ao excluir transação.');
+            }
+        }
+
+        /**
+         * Extend recurrence - Add 12 more months to a recurring transaction series
+         * @param {string} groupId - The group ID of the recurring transaction
+         * @param {string} lastTransactionId - The ID of the last transaction in the series
+         * @returns {Promise<void>}
+         */
+        async function extendRecurrence(groupId, lastTransactionId) {
+            try {
+                if (!auth.currentUser) {
+                    throw new Error('Usuário não autenticado.');
+                }
+
+                if (!confirm('Deseja prorrogar esta série de transações por mais 12 meses?')) {
+                    return;
+                }
+
+                // Get the last transaction to use as template
+                const txnRef = ref(database, `transactions/${lastTransactionId}`);
+                const snapshot = await get(txnRef);
+                
+                if (!snapshot.exists()) {
+                    throw new Error('Transação não encontrada.');
+                }
+                
+                const lastTxn = snapshot.val();
+                
+                if (lastTxn.userId !== auth.currentUser.uid) {
+                    throw new Error('Você não tem permissão para prorrogar esta transação.');
+                }
+
+                // Create 12 new transactions starting from next month
+                const transactionsRef = ref(database, 'transactions');
+                const lastDate = new Date(lastTxn.date);
+                
+                logger.log(`🔄 Prorrogando série ${groupId} por +12 meses...`);
+                
+                /**
+                 * Helper: Add months safely (handles leap years and month overflow)
+                 */
+                function addMonthsSafely(date, monthsToAdd) {
+                    const d = new Date(date);
+                    const originalDay = d.getDate();
+                    d.setMonth(d.getMonth() + monthsToAdd);
+                    
+                    if (d.getDate() !== originalDay) {
+                        d.setDate(0); // Go back to last day of previous month
+                    }
+                    
+                    return d;
+                }
+                
+                for (let i = 1; i <= 12; i++) {
+                    const txnDate = addMonthsSafely(lastDate, i);
+                    
+                    const newInstallmentNumber = lastTxn.installment.current + i;
+                    
+                    const transaction = {
+                        userId: auth.currentUser.uid,
+                        value: lastTxn.value,
+                        type: lastTxn.type,
+                        description: lastTxn.description,
+                        category: lastTxn.category,
+                        date: txnDate.getTime(),
+                        status: lastTxn.status,
+                        createdAt: Date.now(),
+                        groupId: groupId,
+                        installment: {
+                            current: newInstallmentNumber,
+                            total: lastTxn.installment.total + 12
+                        }
+                    };
+                    
+                    await push(transactionsRef, transaction);
+                }
+
+                // Update the total count in all transactions with this groupId
+                const allTxnsRef = ref(database, 'transactions');
+                const allTxnsSnapshot = await get(allTxnsRef);
+                
+                if (allTxnsSnapshot.exists()) {
+                    const updates = {};
+                    allTxnsSnapshot.forEach((childSnapshot) => {
+                        const txn = childSnapshot.val();
+                        if (txn.groupId === groupId) {
+                            updates[`transactions/${childSnapshot.key}/installment/total`] = lastTxn.installment.total + 12;
+                        }
+                    });
+                    
+                    if (Object.keys(updates).length > 0) {
+                        await update(ref(database), updates);
+                    }
+                }
+                
+                logger.log(`✅ Série ${groupId} prorrogada por +12 meses`);
+                alert('✅ Transações prorrogadas com sucesso!');
+                
+            } catch (error) {
+                logger.error('❌ Erro ao prorrogar transação:', error);
+                alert(error.message || 'Erro ao prorrogar transação.');
             }
         }
 
@@ -2758,6 +3314,44 @@
             ui.goToToday();
         });
 
+        // Recurrence controls
+        ui.elements.txnRecurring.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                ui.elements.recurringOptions.classList.remove('hidden');
+                updateRecurringEndDate();
+            } else {
+                ui.elements.recurringOptions.classList.add('hidden');
+            }
+        });
+
+        ui.elements.txnRecurringMonths.addEventListener('input', () => {
+            updateRecurringEndDate();
+        });
+
+        /**
+         * Update recurring end date display
+         */
+        function updateRecurringEndDate() {
+            const dateInput = document.getElementById('txn-date').value;
+            const months = parseInt(ui.elements.txnRecurringMonths.value) || 12;
+            
+            if (dateInput) {
+                const startDate = new Date(dateInput);
+                const endDate = new Date(startDate);
+                endDate.setMonth(startDate.getMonth() + months - 1);
+                
+                const monthNames = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                
+                const endMonth = monthNames[endDate.getMonth()];
+                const endYear = endDate.getFullYear();
+                
+                ui.elements.recurringEndDate.textContent = `${endMonth}/${endYear}`;
+            }
+        }
+
         // Icon selection
         document.querySelectorAll('.icon-selector').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -3028,6 +3622,8 @@
             const category = document.getElementById('txn-category').value;
             const dateInput = document.getElementById('txn-date').value;
             const status = document.getElementById('txn-status').value;
+            const isRecurring = ui.elements.txnRecurring.checked;
+            const recurringMonths = parseInt(ui.elements.txnRecurringMonths.value) || 12;
             
             // Convert date string to timestamp
             const date = new Date(dateInput).getTime();
@@ -3045,7 +3641,7 @@
                     category,
                     date,
                     status
-                }, transactionId);
+                }, transactionId, isRecurring, recurringMonths);
                 
                 // Success
                 ui.hideTransactionModal();
@@ -3054,6 +3650,293 @@
                 
             } catch (error) {
                 ui.showModalMessage(error.message, 'error');
+                ui.setLoading(false);
+            }
+        });
+
+        // ============================================
+        // CREDIT CARDS MANAGEMENT
+        // ============================================
+
+        /**
+         * Render credit cards list
+         */
+        function renderCards() {
+            const container = ui.elements.cardsContainer;
+            if (!container) return;
+            
+            if (state.cards.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full p-8 text-center text-slate-400">
+                        <i class="fas fa-credit-card text-4xl mb-2"></i>
+                        <p class="text-sm">Nenhum cartão cadastrado</p>
+                        <p class="text-xs mt-1">Clique em "Novo Cartão" para começar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = state.cards.map(card => {
+                const brandIcon = card.brand === 'mastercard' ? 'fa-cc-mastercard' :
+                                 card.brand === 'visa' ? 'fa-cc-visa' : 'fa-credit-card';
+                
+                return `
+                    <div class="group relative rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer" 
+                         style="background: linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%);"
+                         onclick="openCardForEdit('${card.id}')">
+                        
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between mb-8">
+                            <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <i class="fas fa-microchip text-white text-xl"></i>
+                            </div>
+                            <i class="fab ${brandIcon} text-white text-3xl opacity-90"></i>
+                        </div>
+                        
+                        <!-- Card Info -->
+                        <div class="space-y-2">
+                            <h4 class="text-white text-xl font-bold tracking-wide">${card.name}</h4>
+                            <p class="text-white/80 text-sm">Limite: ${formatCurrency(card.limit)}</p>
+                            <p class="text-white/70 text-xs">
+                                <i class="fas fa-calendar mr-1"></i>Vence dia ${card.dueDay}
+                            </p>
+                        </div>
+                        
+                        <!-- Delete Button (appears on hover) -->
+                        <button 
+                            onclick="event.stopPropagation(); deleteCard('${card.id}')" 
+                            class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-red-500 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                            title="Excluir cartão"
+                        >
+                            <i class="fas fa-trash-alt text-white text-xs"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Open card modal for creation
+         */
+        function openCardModal() {
+            state.editingCard = null;
+            
+            document.getElementById('card-modal-title').textContent = 'Novo Cartão de Crédito';
+            ui.elements.formCard.reset();
+            
+            // Set default color
+            document.getElementById('card-color').value = '#820AD1';
+            
+            // Reset color selector visual
+            document.querySelectorAll('.color-selector div').forEach(div => div.classList.add('hidden'));
+            document.querySelector('.color-selector[data-color="#820AD1"] div').classList.remove('hidden');
+            
+            ui.elements.cardModalMessage.classList.add('hidden');
+            ui.elements.modalCard.classList.remove('hidden');
+            
+            document.getElementById('card-name').focus();
+        }
+
+        /**
+         * Open card for editing
+         */
+        window.openCardForEdit = function(cardId) {
+            const card = state.cards.find(c => c.id === cardId);
+            if (!card) return;
+            
+            state.editingCard = card;
+            
+            document.getElementById('card-modal-title').textContent = 'Editar Cartão';
+            
+            // Fill form
+            document.getElementById('card-name').value = card.name;
+            document.getElementById('card-limit').value = card.limit;
+            document.getElementById('card-closing-day').value = card.closingDay;
+            document.getElementById('card-due-day').value = card.dueDay;
+            document.getElementById('card-color').value = card.color;
+            
+            // Set brand radio
+            const brandRadio = document.querySelector(`input[name="card-brand"][value="${card.brand}"]`);
+            if (brandRadio) brandRadio.checked = true;
+            
+            // Update color selector visual
+            document.querySelectorAll('.color-selector div').forEach(div => div.classList.add('hidden'));
+            const selectedColor = document.querySelector(`.color-selector[data-color="${card.color}"] div`);
+            if (selectedColor) selectedColor.classList.remove('hidden');
+            
+            ui.elements.modalCard.classList.remove('hidden');
+        };
+
+        /**
+         * Save card (create or update)
+         */
+        async function saveCard(cardData, cardId = null) {
+            try {
+                if (!auth.currentUser) {
+                    throw new Error('Usuário não autenticado.');
+                }
+                
+                // Validate data
+                if (!cardData.name || cardData.name.length > 30) {
+                    throw new Error('Nome inválido (máx. 30 caracteres).');
+                }
+                
+                if (!cardData.limit || cardData.limit <= 0) {
+                    throw new Error('Limite deve ser maior que zero.');
+                }
+                
+                if (!cardData.closingDay || cardData.closingDay < 1 || cardData.closingDay > 31) {
+                    throw new Error('Dia de fechamento inválido (1-31).');
+                }
+                
+                if (!cardData.dueDay || cardData.dueDay < 1 || cardData.dueDay > 31) {
+                    throw new Error('Dia de vencimento inválido (1-31).');
+                }
+                
+                const cardsRef = ref(database, `users/${auth.currentUser.uid}/cards`);
+                
+                if (cardId) {
+                    // UPDATE MODE
+                    const cardRef = ref(database, `users/${auth.currentUser.uid}/cards/${cardId}`);
+                    await update(cardRef, cardData);
+                    logger.log('✅ Cartão atualizado:', cardId);
+                } else {
+                    // CREATE MODE
+                    const newCard = {
+                        ...cardData,
+                        createdAt: Date.now()
+                    };
+                    await push(cardsRef, newCard);
+                    logger.log('✅ Cartão criado');
+                }
+                
+            } catch (error) {
+                logger.error('❌ Erro ao salvar cartão:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Delete a card
+         */
+        window.deleteCard = async function(cardId) {
+            if (!confirm('Deseja realmente excluir este cartão?')) {
+                return;
+            }
+            
+            try {
+                if (!auth.currentUser) {
+                    throw new Error('Usuário não autenticado.');
+                }
+                
+                const cardRef = ref(database, `users/${auth.currentUser.uid}/cards/${cardId}`);
+                await set(cardRef, null);
+                
+                logger.log('✅ Cartão excluído:', cardId);
+                
+            } catch (error) {
+                logger.error('❌ Erro ao excluir cartão:', error);
+                alert(error.message || 'Erro ao excluir cartão.');
+            }
+        };
+
+        /**
+         * Setup Firebase listener for cards
+         */
+        function setupCardListener(userId) {
+            if (listeners.cards) {
+                listeners.cards(); // Unsubscribe previous listener
+            }
+            
+            const cardsRef = ref(database, `users/${userId}/cards`);
+            
+            listeners.cards = onValue(cardsRef, (snapshot) => {
+                const cardsData = snapshot.val();
+                
+                if (cardsData) {
+                    state.cards = Object.keys(cardsData).map(key => ({
+                        id: key,
+                        ...cardsData[key]
+                    }));
+                } else {
+                    state.cards = [];
+                }
+                
+                logger.log('💳 Cartões carregados:', state.cards.length);
+                renderCards();
+            });
+        }
+
+        // Card modal controls
+        ui.elements.btnNewCard.addEventListener('click', () => {
+            openCardModal();
+        });
+
+        ui.elements.btnCloseCardModal.addEventListener('click', () => {
+            ui.elements.modalCard.classList.add('hidden');
+        });
+
+        ui.elements.btnCancelCard.addEventListener('click', () => {
+            ui.elements.modalCard.classList.add('hidden');
+        });
+
+        // Close card modal on background click
+        ui.elements.modalCard.addEventListener('click', (e) => {
+            if (e.target === ui.elements.modalCard) {
+                ui.elements.modalCard.classList.add('hidden');
+            }
+        });
+
+        // Color selector logic
+        document.querySelectorAll('.color-selector').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const color = e.currentTarget.dataset.color;
+                
+                // Update hidden input
+                document.getElementById('card-color').value = color;
+                
+                // Update visual selection
+                document.querySelectorAll('.color-selector div').forEach(div => div.classList.add('hidden'));
+                e.currentTarget.querySelector('div').classList.remove('hidden');
+            });
+        });
+
+        // Card form submission
+        ui.elements.formCard.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('card-name').value.trim();
+            const limit = parseFloat(document.getElementById('card-limit').value);
+            const closingDay = parseInt(document.getElementById('card-closing-day').value);
+            const dueDay = parseInt(document.getElementById('card-due-day').value);
+            const color = document.getElementById('card-color').value;
+            const formData = new FormData(e.target);
+            const brand = formData.get('card-brand');
+            
+            try {
+                ui.setLoading(true);
+                ui.elements.cardModalMessage.classList.add('hidden');
+                
+                const cardId = state.editingCard ? state.editingCard.id : null;
+                await saveCard({
+                    name,
+                    limit,
+                    closingDay,
+                    dueDay,
+                    color,
+                    brand
+                }, cardId);
+                
+                // Success
+                ui.elements.modalCard.classList.add('hidden');
+                ui.setLoading(false);
+                state.editingCard = null;
+                
+            } catch (error) {
+                ui.elements.cardModalMessage.classList.remove('hidden');
+                ui.elements.cardModalMessage.classList.add('bg-red-50', 'text-red-700');
+                ui.elements.cardModalMessageText.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error.message}`;
                 ui.setLoading(false);
             }
         });
@@ -3139,6 +4022,7 @@
                     setupTransactionListener();
                     setupCategoryListener();
                     setupBudgetListener(user.uid);
+                    setupCardListener(user.uid);
                     
                     // Transition to dashboard
                     ui.showView('dashboard');
@@ -3163,12 +4047,17 @@
                         listeners.budgets();
                         listeners.budgets = null;
                     }
+                    if (listeners.cards) {
+                        listeners.cards();
+                        listeners.cards = null;
+                    }
                     
                     // Clear state
                     state.user = null;
                     state.transactions = [];
                     state.categories = {};
                     state.budgets = {};
+                    state.cards = [];
                     
                     // Reset UI to login view
                     ui.showView('login');
