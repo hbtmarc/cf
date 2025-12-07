@@ -13,47 +13,47 @@
         ".write": "auth != null && ((!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))",
         ".validate": "newData.hasChildren(['userId', 'value', 'type', 'description', 'category', 'date', 'status', 'createdAt']) || !newData.exists()",
         "userId": {
-          ".validate": "newData.isString() && newData.val() === auth.uid"
+          ".validate": "newData.isString() && newData.val() === auth.uid || !newData.exists()"
         },
         "value": {
-          ".validate": "newData.isNumber() && newData.val() > 0"
+          ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
         },
         "type": {
-          ".validate": "newData.isString() && (newData.val() === 'receita' || newData.val() === 'despesa')"
+          ".validate": "(newData.isString() && (newData.val() === 'receita' || newData.val() === 'despesa')) || !newData.exists()"
         },
         "description": {
-          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+          ".validate": "(newData.isString() && newData.val().length > 0 && newData.val().length <= 200) || !newData.exists()"
         },
         "category": {
-          ".validate": "newData.isString()"
+          ".validate": "newData.isString() || !newData.exists()"
         },
         "date": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() || !newData.exists()"
         },
         "status": {
-          ".validate": "newData.isString() && (newData.val() === 'confirmada' || newData.val() === 'pendente')"
+          ".validate": "(newData.isString() && (newData.val() === 'confirmada' || newData.val() === 'pendente' || newData.val() === 'faturada')) || !newData.exists()"
         },
         "createdAt": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() || !newData.exists()"
         },
         "paymentMethod": {
-          ".validate": "newData.isString() && (newData.val() === 'cash' || newData.val() === 'credit')"
+          ".validate": "(newData.isString() && (newData.val() === 'cash' || newData.val() === 'credit')) || !newData.exists()"
         },
         "cardId": {
-          ".validate": "newData.isString()"
+          ".validate": "newData.isString() || !newData.exists()"
         },
         "purchaseDate": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() || !newData.exists()"
         },
         "groupId": {
-          ".validate": "newData.isString()"
+          ".validate": "newData.isString() || !newData.exists()"
         },
         "installment": {
           "current": {
-            ".validate": "newData.isNumber() && newData.val() > 0"
+            ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
           },
           "total": {
-            ".validate": "newData.isNumber() && newData.val() > 0"
+            ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
           }
         }
       }

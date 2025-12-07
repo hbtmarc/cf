@@ -1434,16 +1434,43 @@
                 </div>
             </header>
 
-            <!-- Main Content -->
+            <!-- FASE 14.7: Temporal Navigation Bar -->
+            <div class="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between py-4">
+                        <!-- Previous Month -->
+                        <button id="btn-prev-card-month" class="px-4 py-2 hover:bg-slate-100 rounded-lg transition-all flex items-center gap-2 text-slate-700 font-medium">
+                            <i class="fas fa-chevron-left"></i>
+                            <span class="hidden sm:inline">Anterior</span>
+                        </button>
+                        
+                        <!-- Current Period Display -->
+                        <div class="text-center">
+                            <h2 id="card-period-display" class="text-xl font-bold text-slate-800">Janeiro 2026</h2>
+                            <p class="text-xs text-slate-500">Período das Faturas</p>
+                        </div>
+                        
+                        <!-- Next Month -->
+                        <button id="btn-next-card-month" class="px-4 py-2 hover:bg-slate-100 rounded-lg transition-all flex items-center gap-2 text-slate-700 font-medium">
+                            <span class="hidden sm:inline">Próximo</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Reset to Current Month Button (conditionally visible) -->
+                    <div class="pb-3">
+                        <button id="btn-reset-card-month" class="hidden w-full px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all font-medium text-sm">
+                            <i class="fas fa-calendar-day mr-2"></i>Voltar para Fatura Atual
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content - Master-Detail Layout -->
             <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-slate-50">
                 
-                <!-- Cards Grid -->
-                <div id="cards-view-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Cards will be rendered here by renderCardsView() -->
-                </div>
-
                 <!-- Empty State -->
-                <div id="cards-empty-state" class="hidden col-span-full">
+                <div id="cards-empty-state" class="hidden">
                     <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-16 text-center">
                         <div class="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <i class="fas fa-credit-card text-blue-500 text-4xl"></i>
@@ -1456,6 +1483,50 @@
                             <i class="fas fa-plus mr-2"></i>Adicionar Primeiro Cartão
                         </button>
                     </div>
+                </div>
+
+                <!-- Master-Detail Grid (FASE 14) -->
+                <div id="cards-master-detail" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- LEFT: Card Selector (Master) -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl shadow-xl p-6 sticky top-24">
+                            <h2 class="text-lg font-bold text-slate-800 mb-4">
+                                <i class="fas fa-credit-card mr-2 text-blue-600"></i>Cartões
+                            </h2>
+                            <div id="cards-selector-list" class="space-y-3">
+                                <!-- Card selector buttons will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Invoice Details (Detail) -->
+                    <div class="lg:col-span-2">
+                        <div class="space-y-6">
+                            
+                            <!-- Invoice Summary Panel -->
+                            <div id="invoice-summary-panel" class="bg-white rounded-2xl shadow-xl p-6">
+                                <!-- Will be populated dynamically -->
+                            </div>
+
+                            <!-- Invoice Transactions List -->
+                            <div id="invoice-transactions-panel" class="bg-white rounded-2xl shadow-xl p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-slate-800">
+                                        <i class="fas fa-shopping-cart mr-2 text-blue-600"></i>Compras desta Fatura
+                                    </h3>
+                                    <div id="invoice-add-button-header">
+                                        <!-- Will be populated dynamically -->
+                                    </div>
+                                </div>
+                                <div id="invoice-transactions-list">
+                                    <!-- Will be populated dynamically -->
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
 
             </main>
@@ -1549,9 +1620,16 @@
             },
             editingTransaction: null,  // Holds transaction being edited
             budgets: {},  // { categoryId: monthlyLimit }
-            currentDate: new Date(),  // Current month/year being viewed
+            currentDate: new Date(),  // Current month/year being viewed (Dashboard)
+            cardDate: new Date(),  // FASE 14.7: Current month/year for Cards view (independent navigation)
             cards: [],  // Array of credit cards
-            editingCard: null  // Holds card being edited
+            editingCard: null,  // Holds card being edited
+            invoices: {},  // { cardId_monthYear: { status: 'paid', paidAt, amount, transactionId } }
+            selectedInvoice: {  // Current invoice being viewed
+                cardId: null,
+                month: new Date().getMonth(),
+                year: new Date().getFullYear()
+            }
         };
 
         // Store unsubscribe functions for cleanup
@@ -1559,7 +1637,8 @@
             transactions: null,
             categories: null,
             budgets: null,
-            cards: null
+            cards: null,
+            invoices: null
         };
 
         // ============================================
@@ -1697,7 +1776,17 @@
                 btnAddCard: document.getElementById('btn-add-card'),
                 btnAddCardEmpty: document.getElementById('btn-add-card-empty'),
                 cardsViewContainer: document.getElementById('cards-view-container'),
-                cardsEmptyState: document.getElementById('cards-empty-state')
+                cardsEmptyState: document.getElementById('cards-empty-state'),
+                // FASE 14: Invoice Management UI Elements
+                cardsMasterDetail: document.getElementById('cards-master-detail'),
+                cardsSelectorList: document.getElementById('cards-selector-list'),
+                invoiceSummaryPanel: document.getElementById('invoice-summary-panel'),
+                invoiceTransactionsList: document.getElementById('invoice-transactions-list'),
+                // FASE 14.7: Temporal Navigation Elements
+                btnPrevCardMonth: document.getElementById('btn-prev-card-month'),
+                btnNextCardMonth: document.getElementById('btn-next-card-month'),
+                btnResetCardMonth: document.getElementById('btn-reset-card-month'),
+                cardPeriodDisplay: document.getElementById('card-period-display')
             },
 
             /**
@@ -2418,7 +2507,7 @@
                         };
                     })
                     .filter(cat => cat !== null) // Remove categorias deletadas
-                    .sort((a, b) => b.count - a.count); // Ordena por mais usadas
+                    .sort((a, b) => a.name.localeCompare(b.name)); // Ordena alfabeticamente (A-Z)
                 
                 // Renderizar as categorias (já filtradas)
                 container.innerHTML = sortedCategories.map(cat => {
@@ -2899,6 +2988,66 @@
         // ============================================
         
         /**
+         * FASE 14: Get Invoice Data
+         * Calculate invoice details for a card in a specific month
+         * @param {Object} card - Credit card object
+         * @param {number} month - Month (0-11)
+         * @param {number} year - Year (e.g., 2025)
+         * @returns {Object} Invoice data: { total, status, transactions, dueDate, closingDate }
+         */
+        function getInvoiceData(card, month, year) {
+            const invoiceKey = `${card.id}_${year}${String(month + 1).padStart(2, '0')}`;
+            
+            // Check if invoice is paid (exists in invoices node)
+            if (state.invoices[invoiceKey]) {
+                const paidInvoice = state.invoices[invoiceKey];
+                return {
+                    total: paidInvoice.amount,
+                    status: 'paid',
+                    transactions: [],
+                    dueDate: new Date(year, month, card.dueDay),
+                    closingDate: new Date(year, month, card.closingDay),
+                    paidAt: paidInvoice.paidAt,
+                    transactionId: paidInvoice.transactionId
+                };
+            }
+            
+            // Calculate dynamically from transactions
+            const invoiceTransactions = state.transactions.filter(t => {
+                if (t.paymentMethod !== 'credit' || t.cardId !== card.id) {
+                    return false;
+                }
+                
+                // Transaction belongs to this invoice if its due date falls in this month
+                const txnDate = new Date(t.date);
+                const txnMonth = txnDate.getMonth();
+                const txnYear = txnDate.getFullYear();
+                
+                return txnMonth === month && txnYear === year;
+            });
+            
+            const total = invoiceTransactions.reduce((sum, t) => sum + t.value, 0);
+            
+            // Determine status
+            const today = new Date();
+            const closingDate = new Date(year, month, card.closingDay);
+            const dueDate = new Date(year, month, card.dueDay);
+            
+            let status = 'open';
+            if (today >= closingDate) {
+                status = 'closed';
+            }
+            
+            return {
+                total,
+                status,
+                transactions: invoiceTransactions,
+                dueDate,
+                closingDate
+            };
+        }
+        
+        /**
          * Save transaction (Create or Update)
          * @param {Object} transactionData - Transaction details
          * @param {string} transactionId - Transaction ID (for updates, null for creates)
@@ -3263,9 +3412,14 @@
                     
                     logger.log(`🔄 Buscando parcelas do groupId: ${data.groupId}...`);
                     
-                    // Query all transactions with same groupId
-                    const transactionsRef = ref(database, 'transactions');
-                    const snapshot = await get(transactionsRef);
+                    // Query transactions filtered by userId (Firebase security compliance)
+                    const userId = auth.currentUser.uid;
+                    const q = query(
+                        ref(database, 'transactions'),
+                        orderByChild('userId'),
+                        equalTo(userId)
+                    );
+                    const snapshot = await get(q);
                     
                     if (!snapshot.exists()) {
                         throw new Error('Nenhuma transação encontrada.');
@@ -3413,6 +3567,9 @@
          */
         function getFilteredTransactions() {
             let filtered = [...state.transactions];
+            
+            // FASE 15: Exclude faturadas (invoiced transactions) from Dashboard
+            filtered = filtered.filter(txn => txn.status !== 'faturada');
             
             // Apply month/year filter (FIRST - most restrictive)
             const currentMonth = state.currentDate.getMonth();
@@ -3750,12 +3907,241 @@
             ui.showView('cards');
         }
 
+        /**
+         * FASE 14: Select a card (global wrapper for onclick)
+         */
+        function selectCard(cardId) {
+            state.selectedInvoice.cardId = cardId;
+            ui.renderCardSelector();
+            ui.renderInvoiceDetails();
+        }
+
+        /**
+         * FASE 14: Pay Invoice
+         * Create a payment transaction and mark invoice as paid
+         */
+        async function payInvoice(cardId, month, year) {
+            const card = state.cards.find(c => c.id === cardId);
+            if (!card) {
+                alert('Cartão não encontrado.');
+                return;
+            }
+            
+            const invoiceData = getInvoiceData(card, month, year);
+            
+            if (invoiceData.total === 0) {
+                alert('Esta fatura não possui valor a pagar.');
+                return;
+            }
+            
+            const confirmed = confirm(`Confirmar pagamento de ${formatCurrency(invoiceData.total)}?\n\nIsso criará uma despesa no fluxo de caixa e marcará a fatura como paga.`);
+            if (!confirmed) return;
+            
+            try {
+                ui.setLoading(true);
+                
+                const userId = auth.currentUser.uid;
+                const paymentDate = Date.now();
+                
+                // 1. Create payment transaction (expense in cash flow)
+                const txnRef = push(ref(database, 'transactions'));
+                const paymentTransaction = {
+                    userId,
+                    value: invoiceData.total,
+                    type: 'despesa',
+                    description: `Pagamento Fatura ${card.name} - ${getMonthName(month)}/${year}`,
+                    category: 'Pagamento de Cartão',
+                    date: paymentDate,
+                    status: 'confirmada',
+                    createdAt: paymentDate,
+                    paymentMethod: 'cash'
+                };
+                await set(txnRef, paymentTransaction);
+                
+                // 2. Save paid invoice record
+                const invoiceKey = `${cardId}_${year}${String(month + 1).padStart(2, '0')}`;
+                const invoiceRecord = {
+                    status: 'paid',
+                    amount: invoiceData.total,
+                    paidAt: paymentDate,
+                    transactionId: txnRef.key
+                };
+                await set(ref(database, `users/${userId}/invoices/${invoiceKey}`), invoiceRecord);
+                
+                // 3. FASE 15: Mark invoice transactions as 'faturada' (hide from Dashboard)
+                const updates = {};
+                invoiceData.transactions.forEach(txn => {
+                    updates[`/transactions/${txn.id}/status`] = 'faturada';
+                });
+                
+                if (Object.keys(updates).length > 0) {
+                    await update(ref(database), updates);
+                    logger.log(`📋 ${Object.keys(updates).length} transações marcadas como faturadas`);
+                }
+                
+                logger.log(`✅ Fatura paga: ${formatCurrency(invoiceData.total)}`);
+                ui.setLoading(false);
+                
+                // Success feedback
+                alert(`✅ Fatura paga com sucesso!\n\nValor: ${formatCurrency(invoiceData.total)}\n\nAs transações do cartão foram ocultadas do Dashboard.`);
+                
+                // UI will update automatically via listeners
+                
+            } catch (error) {
+                logger.error('❌ Erro ao pagar fatura:', error);
+                
+                // Detailed error message
+                let errorMessage = 'Erro ao processar pagamento. Tente novamente.';
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMessage = 'Erro de permissão no Firebase.\n\nVerifique se as regras de segurança estão atualizadas no Firebase Console.';
+                }
+                
+                alert(`❌ ${errorMessage}`);
+                ui.setLoading(false);
+            }
+        }
+
+        /**
+         * FASE 14.5: Restore Invoice (Undo Payment)
+         * Delete the paid invoice record and the payment transaction
+         * @param {string} cardId - Card ID
+         * @param {number} month - Month (0-11)
+         * @param {number} year - Year
+         */
+        async function restoreInvoice(cardId, month, year) {
+            const card = state.cards.find(c => c.id === cardId);
+            if (!card) {
+                alert('Cartão não encontrado.');
+                return;
+            }
+            
+            const invoiceKey = `${cardId}_${year}${String(month + 1).padStart(2, '0')}`;
+            const invoiceRecord = state.invoices[invoiceKey];
+            
+            if (!invoiceRecord) {
+                alert('Fatura não encontrada.');
+                return;
+            }
+            
+            const confirmed = confirm(`⚠️ Restaurar fatura de ${formatCurrency(invoiceRecord.amount)}?\n\nIsso irá:\n• Remover o registro de pagamento\n• Excluir a despesa do fluxo de caixa\n• Reabrir a fatura`);
+            if (!confirmed) return;
+            
+            try {
+                ui.setLoading(true);
+                
+                const userId = auth.currentUser.uid;
+                
+                // 1. Verify and delete payment transaction
+                if (invoiceRecord.transactionId) {
+                    const txnRef = ref(database, `transactions/${invoiceRecord.transactionId}`);
+                    
+                    // First, verify the transaction exists and belongs to the user
+                    const txnSnapshot = await get(txnRef);
+                    if (txnSnapshot.exists()) {
+                        const txnData = txnSnapshot.val();
+                        if (txnData.userId === userId) {
+                            await remove(txnRef);
+                            logger.log(`🗑️ Transação de pagamento excluída: ${invoiceRecord.transactionId}`);
+                        } else {
+                            throw new Error('Transação não pertence ao usuário autenticado.');
+                        }
+                    } else {
+                        logger.warn('⚠️ Transação de pagamento não encontrada (pode já ter sido excluída)');
+                    }
+                }
+                
+                // 2. Delete invoice record
+                const invoiceRef = ref(database, `users/${userId}/invoices/${invoiceKey}`);
+                await remove(invoiceRef);
+                
+                // 3. PHASE 15: Restore invoice transactions status back to 'confirmada'
+                // Fetch transactions that belong to this invoice
+                const invoiceData = await getInvoiceData(card, month, year);
+                if (invoiceData && invoiceData.transactions && invoiceData.transactions.length > 0) {
+                    const restoreUpdates = {};
+                    invoiceData.transactions.forEach(txn => {
+                        if (txn.status === 'faturada') {
+                            restoreUpdates[`/transactions/${txn.id}/status`] = 'confirmada';
+                        }
+                    });
+                    
+                    if (Object.keys(restoreUpdates).length > 0) {
+                        await update(ref(database), restoreUpdates);
+                        logger.log(`🔄 ${Object.keys(restoreUpdates).length} transações restauradas (faturada → confirmada)`);
+                    }
+                }
+                
+                logger.log(`✅ Fatura restaurada: ${formatCurrency(invoiceRecord.amount)}`);
+                ui.setLoading(false);
+                
+                // Success feedback
+                alert(`✅ Fatura restaurada com sucesso!\n\nValor: ${formatCurrency(invoiceRecord.amount)}\n\nA fatura voltou ao status "Fechada" e a despesa foi removida do fluxo de caixa.\n\n${Object.keys(restoreUpdates || {}).length} compras voltaram ao Dashboard.`);
+                
+                // UI will update automatically via listeners
+                
+            } catch (error) {
+                logger.error('❌ Erro ao restaurar fatura:', error);
+                
+                // Detailed error message
+                let errorMessage = 'Erro ao restaurar fatura. Tente novamente.';
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMessage = 'Erro de permissão no Firebase.\n\nVerifique se as regras de segurança estão atualizadas no Firebase Console.';
+                }
+                
+                alert(`❌ ${errorMessage}`);
+                ui.setLoading(false);
+            }
+        }
+
+        /**
+         * Helper: Get month name
+         */
+        function getMonthName(month) {
+            const names = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+                          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            return names[month];
+        }
+
+        /**
+         * FASE 14.5: Open transaction modal with card pre-selected
+         * @param {string} cardId - Card ID to pre-select
+         */
+        function openCardExpense(cardId) {
+            // Open modal for expense
+            ui.showTransactionModal('despesa');
+            
+            // Wait for modal to be fully rendered
+            setTimeout(() => {
+                // Set payment method to credit
+                const paymentMethodSelect = ui.elements.txnPaymentMethod;
+                if (paymentMethodSelect) {
+                    paymentMethodSelect.value = 'credit';
+                    
+                    // Trigger change event to reveal card options
+                    const changeEvent = new Event('change', { bubbles: true });
+                    paymentMethodSelect.dispatchEvent(changeEvent);
+                    
+                    // Wait for card options to be revealed, then select card
+                    setTimeout(() => {
+                        const cardSelect = ui.elements.txnCard;
+                        if (cardSelect) {
+                            cardSelect.value = cardId;
+                        }
+                    }, 50);
+                }
+            }, 100);
+        }
+
         // Make functions globally accessible for onclick handlers
         window.deleteTransaction = deleteTransaction;
         window.toggleTransactionStatus = toggleTransactionStatus;
         window.openTransactionForEdit = openTransactionForEdit;
         window.toggleCategoryFilter = toggleCategoryFilter;
         window.navigateToCardsView = navigateToCardsView;
+        window.selectCard = selectCard;
+        window.payInvoice = payInvoice;
+        window.restoreInvoice = restoreInvoice;
+        window.openCardExpense = openCardExpense;
 
         // ============================================
         // EVENT LISTENERS
@@ -3997,6 +4383,19 @@
 
         ui.elements.btnToday.addEventListener('click', () => {
             ui.goToToday();
+        });
+
+        // FASE 14.7: Temporal navigation controls (Cards view)
+        ui.elements.btnPrevCardMonth.addEventListener('click', () => {
+            ui.prevCardMonth();
+        });
+
+        ui.elements.btnNextCardMonth.addEventListener('click', () => {
+            ui.nextCardMonth();
+        });
+
+        ui.elements.btnResetCardMonth.addEventListener('click', () => {
+            ui.resetCardMonth();
         });
 
         // Payment method controls
@@ -4426,6 +4825,19 @@
                 const brandIcon = card.brand === 'mastercard' ? 'fa-cc-mastercard' :
                                  card.brand === 'visa' ? 'fa-cc-visa' : 'fa-credit-card';
                 
+                // FASE 14: Get real invoice data for current month
+                const now = new Date();
+                const invoiceData = getInvoiceData(card, now.getMonth(), now.getFullYear());
+                const faturaAtual = invoiceData.total;
+                
+                // Calculate total used limit (all future installments)
+                const cardTransactions = state.transactions.filter(t => 
+                    t.cardId === card.id && 
+                    (t.status === 'pendente' || t.status === 'confirmada')
+                );
+                const limiteUsado = cardTransactions.reduce((sum, t) => sum + (t.value || 0), 0);
+                const disponivel = card.limit - limiteUsado;
+                
                 return `
                     <div class="group relative rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 cursor-pointer" 
                          style="background: linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%);"
@@ -4442,9 +4854,12 @@
                         <!-- Card Info -->
                         <div class="space-y-2">
                             <h4 class="text-white text-xl font-bold tracking-wide">${card.name}</h4>
-                            <p class="text-white/80 text-sm">Limite: ${formatCurrency(card.limit)}</p>
+                            <p class="text-white/80 text-sm">Fatura Atual: ${formatCurrency(faturaAtual)}</p>
                             <p class="text-white/70 text-xs">
                                 <i class="fas fa-calendar mr-1"></i>Vence dia ${card.dueDay}
+                            </p>
+                            <p class="text-white/70 text-xs">
+                                <i class="fas fa-coins mr-1"></i>Disponível: ${formatCurrency(disponivel)}
                             </p>
                         </div>
                         
@@ -4462,169 +4877,293 @@
         }
 
         /**
-         * Render cards management view (detailed financial view)
+         * FASE 14: Render cards management view (Master-Detail Invoice Management)
          */
+        /**
+         * FASE 14.7: Navigate to previous month (Cards view)
+         */
+        ui.prevCardMonth = function() {
+            const date = new Date(state.cardDate);
+            date.setMonth(date.getMonth() - 1);
+            state.cardDate = date;
+            
+            // Update selected invoice to match
+            state.selectedInvoice.month = date.getMonth();
+            state.selectedInvoice.year = date.getFullYear();
+            
+            this.renderCardsView();
+        };
+
+        /**
+         * FASE 14.7: Navigate to next month (Cards view)
+         */
+        ui.nextCardMonth = function() {
+            const date = new Date(state.cardDate);
+            date.setMonth(date.getMonth() + 1);
+            state.cardDate = date;
+            
+            // Update selected invoice to match
+            state.selectedInvoice.month = date.getMonth();
+            state.selectedInvoice.year = date.getFullYear();
+            
+            this.renderCardsView();
+        };
+
+        /**
+         * FASE 14.7: Reset to current month (Cards view)
+         */
+        ui.resetCardMonth = function() {
+            state.cardDate = new Date();
+            
+            // Update selected invoice to match
+            state.selectedInvoice.month = state.cardDate.getMonth();
+            state.selectedInvoice.year = state.cardDate.getFullYear();
+            
+            this.renderCardsView();
+        };
+
         ui.renderCardsView = function() {
-            const container = ui.elements.cardsViewContainer;
+            const masterDetail = ui.elements.cardsMasterDetail;
             const emptyState = ui.elements.cardsEmptyState;
             
-            if (!container || !emptyState) return;
+            if (!masterDetail || !emptyState) return;
+            
+            // FASE 14.7: Update period display
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const displayMonth = monthNames[state.cardDate.getMonth()];
+            const displayYear = state.cardDate.getFullYear();
+            
+            if (ui.elements.cardPeriodDisplay) {
+                ui.elements.cardPeriodDisplay.textContent = `${displayMonth} ${displayYear}`;
+            }
+            
+            // FASE 14.7: Show/hide reset button
+            const now = new Date();
+            const isCurrentMonth = state.cardDate.getMonth() === now.getMonth() && 
+                                  state.cardDate.getFullYear() === now.getFullYear();
+            
+            if (ui.elements.btnResetCardMonth) {
+                ui.elements.btnResetCardMonth.classList.toggle('hidden', isCurrentMonth);
+            }
             
             // Show/hide empty state
             if (state.cards.length === 0) {
-                container.innerHTML = '';
+                masterDetail.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 return;
             }
             
             emptyState.classList.add('hidden');
+            masterDetail.classList.remove('hidden');
             
-            // Render each card with detailed financial info
+            // If no card is selected, select the first one
+            if (!state.selectedInvoice.cardId && state.cards.length > 0) {
+                state.selectedInvoice.cardId = state.cards[0].id;
+                // FASE 14.7: Use cardDate instead of 'now'
+                state.selectedInvoice.month = state.cardDate.getMonth();
+                state.selectedInvoice.year = state.cardDate.getFullYear();
+            }
+            
+            // Render card selector
+            this.renderCardSelector();
+            
+            // Render invoice details
+            this.renderInvoiceDetails();
+        };
+
+        /**
+         * FASE 14: Render card selector (master list)
+         */
+        ui.renderCardSelector = function() {
+            const container = ui.elements.cardsSelectorList;
+            if (!container) return;
+            
             container.innerHTML = state.cards.map(card => {
-                // Calculate real values based on transactions
-                const cardTransactions = state.transactions.filter(t => 
-                    t.cardId === card.id && 
-                    (t.status === 'pendente' || t.status === 'confirmada')
-                );
-                
-                // Total used limit (all pending/confirmed installments)
-                const limiteUsado = cardTransactions.reduce((sum, t) => sum + (t.value || 0), 0);
-                
-                // Current month invoice (transactions with due date in current month)
-                const now = new Date();
-                const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-                const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
-                
-                const faturaAtual = cardTransactions
-                    .filter(t => t.date >= currentMonthStart && t.date <= currentMonthEnd)
-                    .reduce((sum, t) => sum + (t.value || 0), 0);
-                
-                // Available limit
-                const disponivel = card.limit - limiteUsado;
-                
-                // Usage percentage (based on total used, not current invoice)
-                const porcentagemUso = (limiteUsado / card.limit) * 100;
-                
-                // Determine best purchase day (day after closing)
-                const melhorDia = card.closingDay === 31 ? 1 : card.closingDay + 1;
-                
-                // Brand icon
+                const isSelected = state.selectedInvoice.cardId === card.id;
                 const brandIcon = card.brand === 'mastercard' ? 'fa-cc-mastercard' :
                                  card.brand === 'visa' ? 'fa-cc-visa' : 'fa-credit-card';
                 
                 return `
-                    <div class="rounded-2xl shadow-xl overflow-hidden transform transition-all hover:scale-[1.02] duration-300">
-                        <!-- Card Visual (Top Section) -->
-                        <div class="p-6 text-white relative overflow-hidden" style="background: linear-gradient(135deg, ${card.color} 0%, ${card.color}DD 100%);">
-                            <!-- Decorative Elements -->
-                            <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
-                            
-                            <!-- Card Header -->
-                            <div class="relative flex items-start justify-between mb-8">
-                                <div>
-                                    <h3 class="text-xl font-bold tracking-wide mb-1">${card.name}</h3>
-                                    <p class="text-white/70 text-sm">Cartão de Crédito</p>
-                                </div>
-                                <i class="fab ${brandIcon} text-4xl opacity-90"></i>
-                            </div>
-                            
-                            <!-- Chip Icon -->
-                            <div class="relative w-12 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mb-6">
-                                <i class="fas fa-microchip text-2xl"></i>
-                            </div>
+                    <button 
+                        onclick="selectCard('${card.id}')"
+                        class="w-full text-left p-4 rounded-xl transition-all ${
+                            isSelected 
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-500' 
+                                : 'bg-slate-50 hover:bg-slate-100 border-2 border-transparent'
+                        }"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-slate-800">${card.name}</span>
+                            <i class="fab ${brandIcon} text-lg ${isSelected ? 'text-blue-600' : 'text-slate-400'}"></i>
                         </div>
-                        
-                        <!-- Financial Info Section (Bottom - White Background) -->
-                        <div class="bg-white p-6">
-                            <!-- The Financial Tripod -->
-                            <div class="grid grid-cols-3 gap-4 mb-5">
-                                <!-- Limite -->
-                                <div class="text-center">
-                                    <p class="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Limite</p>
-                                    <p class="text-lg font-bold text-slate-800">${formatCurrency(card.limit)}</p>
-                                </div>
-                                
-                                <!-- Fatura Atual -->
-                                <div class="text-center">
-                                    <p class="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Atual</p>
-                                    <p class="text-lg font-bold ${faturaAtual > 0 ? 'text-red-600' : 'text-emerald-600'}">${formatCurrency(faturaAtual)}</p>
-                                </div>
-                                
-                                <!-- Disponível -->
-                                <div class="text-center">
-                                    <p class="text-xs text-slate-500 mb-1 font-medium uppercase tracking-wide">Disponível</p>
-                                    <p class="text-lg font-bold text-emerald-600">${formatCurrency(disponivel)}</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Progress Bar -->
-                            <div class="mb-5">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-semibold text-slate-600">Uso do Limite</span>
-                                    <span class="text-xs font-bold ${porcentagemUso > 80 ? 'text-red-600' : porcentagemUso > 50 ? 'text-amber-600' : 'text-emerald-600'}">
-                                        ${porcentagemUso.toFixed(1)}%
-                                    </span>
-                                </div>
-                                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                        class="h-full rounded-full transition-all duration-500 ${
-                                            porcentagemUso > 80 ? 'bg-gradient-to-r from-red-500 to-red-600' :
-                                            porcentagemUso > 50 ? 'bg-gradient-to-r from-amber-500 to-amber-600' :
-                                            'bg-gradient-to-r from-emerald-500 to-emerald-600'
-                                        }"
-                                        style="width: ${porcentagemUso}%"
-                                    ></div>
-                                </div>
-                            </div>
-                            
-                            <!-- Card Footer Info -->
-                            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-slate-500 mb-1">Fechamento</span>
-                                    <span class="text-sm font-bold text-slate-700">
-                                        <i class="fas fa-calendar-times mr-1 text-slate-400"></i>Dia ${card.closingDay}
-                                    </span>
-                                </div>
-                                
-                                <div class="flex flex-col">
-                                    <span class="text-xs text-slate-500 mb-1">Vencimento</span>
-                                    <span class="text-sm font-bold text-slate-700">
-                                        <i class="fas fa-calendar-check mr-1 text-slate-400"></i>Dia ${card.dueDay}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <!-- Best Purchase Day Badge -->
-                            <div class="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-lightbulb text-blue-600 mr-2"></i>
-                                        <span class="text-xs font-semibold text-blue-800">Melhor dia para comprar</span>
+                        <div class="flex items-center justify-between text-xs text-slate-600">
+                            <span>Limite: ${formatCurrency(card.limit)}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        };
+
+        /**
+         * FASE 14: Render invoice details
+         */
+        ui.renderInvoiceDetails = function() {
+            const card = state.cards.find(c => c.id === state.selectedInvoice.cardId);
+            if (!card) return;
+            
+            const { month, year } = state.selectedInvoice;
+            const invoiceData = getInvoiceData(card, month, year);
+            
+            // Render invoice summary
+            this.renderInvoiceSummary(card, invoiceData);
+            
+            // Render invoice transactions
+            this.renderInvoiceTransactions(invoiceData);
+        };
+
+        /**
+         * FASE 14: Render invoice summary panel
+         */
+        ui.renderInvoiceSummary = function(card, invoiceData) {
+            const panel = ui.elements.invoiceSummaryPanel;
+            if (!panel) return;
+            
+            const statusConfig = {
+                open: { label: 'Aberta', color: 'blue', icon: 'fa-folder-open' },
+                closed: { label: 'Fechada', color: 'orange', icon: 'fa-folder' },
+                paid: { label: 'Paga', color: 'green', icon: 'fa-check-circle' }
+            };
+            
+            const status = statusConfig[invoiceData.status];
+            const dueDateStr = invoiceData.dueDate.toLocaleDateString('pt-BR');
+            
+            panel.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-800 mb-1">${formatCurrency(invoiceData.total)}</h2>
+                        <p class="text-sm text-slate-500">Total da Fatura</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="inline-flex items-center px-3 py-1.5 rounded-full bg-${status.color}-100 border border-${status.color}-200 mb-2">
+                            <i class="fas ${status.icon} text-${status.color}-600 mr-2"></i>
+                            <span class="text-sm font-semibold text-${status.color}-700">${status.label}</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Vence em ${dueDateStr}</p>
+                    </div>
+                </div>
+                
+                ${invoiceData.status === 'closed' && invoiceData.total > 0 ? `
+                    <button 
+                        onclick="payInvoice('${card.id}', ${state.selectedInvoice.month}, ${state.selectedInvoice.year})"
+                        class="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                    >
+                        <i class="fas fa-money-bill-wave mr-2"></i>💸 Pagar Fatura de ${formatCurrency(invoiceData.total)}
+                    </button>
+                ` : ''}
+                
+                ${invoiceData.status === 'paid' ? `
+                    <div class="space-y-3">
+                        <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-emerald-600 text-xl mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-semibold text-emerald-800">Fatura Paga</p>
+                                        <p class="text-xs text-emerald-600">Pago em ${new Date(invoiceData.paidAt).toLocaleDateString('pt-BR')}</p>
                                     </div>
-                                    <span class="text-sm font-bold text-blue-900">Dia ${melhorDia}</span>
                                 </div>
-                            </div>
-                            
-                            <!-- Action Buttons -->
-                            <div class="mt-5 flex gap-2">
                                 <button 
-                                    onclick="openCardForEdit('${card.id}')"
-                                    class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all text-sm"
+                                    onclick="restoreInvoice('${card.id}', ${state.selectedInvoice.month}, ${state.selectedInvoice.year})"
+                                    class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg transition-all text-sm font-medium"
+                                    title="Desfazer pagamento"
                                 >
-                                    <i class="fas fa-edit mr-1.5"></i>Editar
-                                </button>
-                                <button 
-                                    onclick="deleteCard('${card.id}')"
-                                    class="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-all text-sm"
-                                >
-                                    <i class="fas fa-trash-alt"></i>
+                                    <i class="fas fa-undo mr-2"></i>Restaurar
                                 </button>
                             </div>
                         </div>
                     </div>
+                ` : ''}
+            `;
+        };
+
+        /**
+         * FASE 14.6: Render invoice transactions list
+         */
+        ui.renderInvoiceTransactions = function(invoiceData) {
+            const container = ui.elements.invoiceTransactionsList;
+            if (!container) return;
+            
+            const card = state.cards.find(c => c.id === state.selectedInvoice.cardId);
+            if (!card) return;
+            
+            // Render add button in header (only if invoice is not paid)
+            const headerButton = document.getElementById('invoice-add-button-header');
+            if (headerButton) {
+                if (invoiceData.status !== 'paid') {
+                    headerButton.innerHTML = `
+                        <button 
+                            onclick="openCardExpense('${card.id}')"
+                            class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
+                            title="Adicionar compra neste cartão"
+                        >
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar</span>
+                        </button>
+                    `;
+                } else {
+                    headerButton.innerHTML = '';
+                }
+            }
+            
+            if (invoiceData.transactions.length === 0) {
+                container.innerHTML = `
+                    <div class="py-16 text-center">
+                        <div class="inline-block p-6 bg-blue-50 rounded-full mb-4">
+                            <i class="fas fa-shopping-bag text-blue-300 text-5xl"></i>
+                        </div>
+                        <p class="text-slate-600 font-medium mb-6">Fatura vazia</p>
+                        ${invoiceData.status !== 'paid' ? `
+                            <button 
+                                onclick="openCardExpense('${card.id}')"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                            >
+                                <i class="fas fa-plus-circle text-lg"></i>
+                                <span>Adicionar primeira compra</span>
+                            </button>
+                        ` : '<p class="text-slate-400 text-sm">Esta fatura foi paga sem compras registradas</p>'}
+                    </div>
                 `;
-            }).join('');
+                return;
+            }
+            
+            // Sort by purchase date (most recent first)
+            const sorted = [...invoiceData.transactions].sort((a, b) => b.purchaseDate - a.purchaseDate);
+            
+            container.innerHTML = `
+                <div class="space-y-3">
+                    ${sorted.map(t => {
+                        const purchaseDate = new Date(t.purchaseDate).toLocaleDateString('pt-BR');
+                        const installmentText = t.installment ? 
+                            `${t.installment.current}/${t.installment.total}x` : '';
+                        
+                        return `
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-slate-800">${t.description}</p>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        <i class="fas fa-calendar mr-1"></i>${purchaseDate}
+                                        ${installmentText ? `<span class="ml-3"><i class="fas fa-credit-card mr-1"></i>${installmentText}</span>` : ''}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold text-slate-800">${formatCurrency(t.value)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         };
 
         /**
@@ -4781,6 +5320,38 @@
                 if (state.currentView === 'cards') {
                     ui.renderCardsView();
                 }
+            });
+        }
+
+        /**
+         * FASE 14: Setup Invoice Listener
+         * Listen for paid invoice records
+         */
+        function setupInvoiceListener(userId) {
+            if (listeners.invoices) {
+                listeners.invoices(); // Unsubscribe previous listener
+            }
+            
+            const invoicesRef = ref(database, `users/${userId}/invoices`);
+            
+            listeners.invoices = onValue(invoicesRef, (snapshot) => {
+                const invoicesData = snapshot.val();
+                
+                if (invoicesData) {
+                    state.invoices = invoicesData;
+                } else {
+                    state.invoices = {};
+                }
+                
+                logger.log('📋 Faturas carregadas:', Object.keys(state.invoices).length);
+                
+                // Update cards view if currently active
+                if (state.currentView === 'cards') {
+                    ui.renderCardsView();
+                }
+                
+                // Update dashboard widgets
+                renderCards();
             });
         }
 
@@ -4961,6 +5532,7 @@
                     setupCategoryListener();
                     setupBudgetListener(user.uid);
                     setupCardListener(user.uid);
+                    setupInvoiceListener(user.uid);
                     
                     // Transition to dashboard
                     ui.showView('dashboard');
@@ -4989,6 +5561,10 @@
                         listeners.cards();
                         listeners.cards = null;
                     }
+                    if (listeners.invoices) {
+                        listeners.invoices();
+                        listeners.invoices = null;
+                    }
                     
                     // Clear state
                     state.user = null;
@@ -4996,6 +5572,7 @@
                     state.categories = {};
                     state.budgets = {};
                     state.cards = [];
+                    state.invoices = {};
                     
                     // Reset UI to login view
                     ui.showView('login');
