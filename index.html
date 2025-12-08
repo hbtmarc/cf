@@ -319,7 +319,7 @@
             </div>
             
             <!-- Fixed Header -->
-            <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center justify-between h-16">
                         <!-- Logo & Title -->
@@ -366,7 +366,7 @@
                                     </button>
                                     
                                     <!-- Dropdown Menu -->
-                                    <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+                                    <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-[60]">
                                         <button class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2">
                                             <i class="fas fa-user-cog text-slate-400"></i>
                                             <span>Configurações</span>
@@ -389,7 +389,7 @@
             </header>
 
             <!-- Month Navigation Bar -->
-            <div class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm print:hidden">
+            <div class="sticky top-16 z-40 bg-white border-b border-slate-200 shadow-sm print:hidden">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div class="flex items-center justify-between">
                         <!-- Previous Month Button -->
@@ -1407,7 +1407,7 @@
         <section id="view-cards" class="hidden min-h-screen flex flex-col">
             
             <!-- Fixed Header -->
-            <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center justify-between h-16">
                         <!-- Logo & Title -->
@@ -4863,14 +4863,23 @@
                             </p>
                         </div>
                         
-                        <!-- Delete Button (appears on hover) -->
-                        <button 
-                            onclick="event.stopPropagation(); deleteCard('${card.id}')" 
-                            class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-red-500 backdrop-blur-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
-                            title="Excluir cartão"
-                        >
-                            <i class="fas fa-trash-alt text-white text-xs"></i>
-                        </button>
+                        <!-- Edit & Delete Buttons (appear on hover) -->
+                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button 
+                                onclick="event.stopPropagation(); openCardForEdit('${card.id}')" 
+                                class="w-8 h-8 bg-white/20 hover:bg-blue-500 backdrop-blur-sm rounded-lg transition-all flex items-center justify-center"
+                                title="Editar cartão"
+                            >
+                                <i class="fas fa-pencil-alt text-white text-xs"></i>
+                            </button>
+                            <button 
+                                onclick="event.stopPropagation(); deleteCard('${card.id}')" 
+                                class="w-8 h-8 bg-white/20 hover:bg-red-500 backdrop-blur-sm rounded-lg transition-all flex items-center justify-center"
+                                title="Excluir cartão"
+                            >
+                                <i class="fas fa-trash-alt text-white text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
