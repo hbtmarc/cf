@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- VERSÃO: 2025-12-08-19:20 - FASE 17 ORDENAÇÃO ALFABÉTICA -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -2389,6 +2390,170 @@
                 
                 this.elements.cardIncome.textContent = formatCurrency(monthIncome);
                 this.elements.cardExpense.textContent = formatCurrency(monthExpense);
+                
+                // FASE 20: Calcular variação percentual vs mês anterior
+                const prevDate = new Date(currentYear, currentMonth - 1, 1);
+                const prevMonth = prevDate.getMonth();
+                const prevYear = prevDate.getFullYear();
+                
+                const prevIncome = transactions
+                    .filter(t => {
+                        const txnDate = new Date(t.date);
+                        return t.type === 'receita' && 
+                               t.status === 'confirmada' &&
+                               txnDate.getMonth() === prevMonth &&
+                               txnDate.getFullYear() === prevYear;
+                    })
+                    .reduce((sum, t) => sum + t.value, 0);
+                
+                const prevExpense = transactions
+                    .filter(t => {
+                        const txnDate = new Date(t.date);
+                        return t.type === 'despesa' && 
+                               t.status === 'confirmada' &&
+                               txnDate.getMonth() === prevMonth &&
+                               txnDate.getFullYear() === prevYear;
+                    })
+                    .reduce((sum, t) => sum + t.value, 0);
+                
+                // Calcular variação (%)
+                const incomeVariation = prevIncome === 0 
+                    ? (monthIncome > 0 ? 100 : 0)
+                    : ((monthIncome - prevIncome) / prevIncome) * 100;
+                
+                const expenseVariation = prevExpense === 0
+                    ? (monthExpense > 0 ? 100 : 0)
+                    : ((monthExpense - prevExpense) / prevExpense) * 100;
+                
+                // Atualizar badges de variação (Receita)
+                const incomeBadge = document.querySelector('#card-income').parentElement.parentElement.querySelector('.inline-flex');
+                if (incomeBadge) {
+                    const icon = incomeVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const colorClasses = incomeVariation >= 0 
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-rose-50 text-rose-700';
+                    
+                    incomeBadge.className = `inline-flex items-center px-2 py-1 rounded-full font-medium ${colorClasses}`;
+                    incomeBadge.innerHTML = `<i class="fas ${icon} text-[10px] mr-1"></i>${incomeVariation >= 0 ? '+' : ''}${incomeVariation.toFixed(1)}%`;
+                }
+                
+                // Atualizar badges de variação (Despesa - cores invertidas: mais gasto = vermelho)
+                const expenseBadge = document.querySelector('#card-expense').parentElement.parentElement.querySelector('.inline-flex');
+                if (expenseBadge) {
+                    const icon = expenseVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    const colorClasses = expenseVariation >= 0 
+                        ? 'bg-rose-50 text-rose-700'  // Gastou mais = ruim = vermelho
+                        : 'bg-emerald-50 text-emerald-700'; // Economizou = bom = verde
+                    
+                    expenseBadge.className = `inline-flex items-center px-2 py-1 rounded-full font-medium ${colorClasses}`;
+                    expenseBadge.innerHTML = `<i class="fas ${icon} text-[10px] mr-1"></i>${expenseVariation >= 0 ? '+' : ''}${expenseVariation.toFixed(1)}%`;
+                }
+            },
+            
+            /**
+             * FASE 20: Render dashboard widgets for credit cards with real data
+             */
+            renderDashboardWidgets() {
+                const container = document.getElementById('cards-container');
+                if (!container) return;
+                
+                if (state.cards.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full p-8 text-center text-slate-400">
+                            <i class="fas fa-credit-card text-4xl mb-2"></i>
+                            <p class="text-sm">Nenhum cartão cadastrado</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const currentMonth = state.currentDate.getMonth();
+                const currentYear = state.currentDate.getFullYear();
+                
+                const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                const monthName = monthNames[currentMonth];
+                
+                container.innerHTML = state.cards.map(card => {
+                    // FASE 20.2: Calcular fatura do mês visualizado
+                    const invoiceTransactions = state.transactions.filter(t => {
+                        const txnDate = new Date(t.date);
+                        return t.cardId === card.id &&
+                               txnDate.getMonth() === currentMonth &&
+                               txnDate.getFullYear() === currentYear;
+                    });
+                    
+                    const invoiceValue = invoiceTransactions.reduce((sum, t) => sum + t.value, 0);
+                    
+                    // FASE 20.2: Calcular uso total do limite (todas as transações não pagas)
+                    const totalUsed = state.transactions
+                        .filter(t => t.cardId === card.id && t.status !== 'confirmada')
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    const available = card.limit - totalUsed;
+                    const percentUsed = (totalUsed / card.limit) * 100;
+                    const isAlert = percentUsed > 80;
+                    
+                    const brandIcon = card.brand === 'mastercard' ? 'fa-cc-mastercard' :
+                                     card.brand === 'visa' ? 'fa-cc-visa' : 'fa-credit-card';
+                    
+                    // FASE 20.2: Cor da barra baseada no alerta
+                    const progressColor = isAlert ? '#ef4444' : (card.color || '#820AD1');
+                    
+                    return `
+                        <div class="bg-white rounded-2xl shadow-lg p-5 border border-slate-100 hover:shadow-xl transition-all duration-300">
+                            <!-- Header: Nome e Bandeira -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center" 
+                                         style="background: linear-gradient(135deg, ${card.color || '#820AD1'}20, ${card.color || '#820AD1'}10);">
+                                        <i class="fab ${brandIcon} text-2xl" style="color: ${card.color || '#820AD1'};"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-base">${card.name}</h4>
+                                        <p class="text-xs text-slate-500">${card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</p>
+                                    </div>
+                                </div>
+                                <button onclick="window.openCardForEdit('${card.id}')" 
+                                        class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Fatura do Mês -->
+                            <div class="mb-4 pb-3 border-b border-slate-100">
+                                <div class="flex items-baseline justify-between mb-1">
+                                    <span class="text-xs font-medium text-slate-500">Fatura ${monthName}</span>
+                                    <span class="text-2xl font-bold text-slate-800">${formatCurrency(invoiceValue)}</span>
+                                </div>
+                                ${invoiceTransactions.length > 0 ? `
+                                    <p class="text-xs text-slate-400 mt-1">${invoiceTransactions.length} transação${invoiceTransactions.length !== 1 ? 'ões' : ''}</p>
+                                ` : '<p class="text-xs text-slate-400 mt-1">Nenhuma transação este mês</p>'}
+                            </div>
+                            
+                            <!-- Limite Total -->
+                            <div class="mb-2">
+                                <div class="flex items-center justify-between text-xs mb-2">
+                                    <span class="text-slate-500 font-medium">Limite Total</span>
+                                    <span class="font-bold ${isAlert ? 'text-rose-600' : 'text-slate-700'}">
+                                        ${percentUsed.toFixed(0)}% usado
+                                    </span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden shadow-inner">
+                                    <div class="h-full rounded-full transition-all duration-500" 
+                                         style="width: ${Math.min(percentUsed, 100)}%; background: ${progressColor};"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Disponível -->
+                            <div class="flex items-center justify-between text-xs mt-3">
+                                <span class="text-slate-400">${formatCurrency(totalUsed)} usado</span>
+                                <span class="font-semibold ${available < card.limit * 0.2 ? 'text-rose-600' : 'text-emerald-600'}">
+                                    ${formatCurrency(available)} disp.
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             },
 
             /**
@@ -3342,6 +3507,31 @@
                         throw new Error('Cartão não encontrado.');
                     }
                     
+                    // FASE 20.2: TRAVA DE LIMITE - Verificar saldo disponível
+                    const totalUsed = state.transactions
+                        .filter(t => t.cardId === transactionData.cardId && 
+                                     (t.status === 'pendente' || t.status === 'confirmada'))
+                        .reduce((sum, t) => sum + t.value, 0);
+                    
+                    const availableLimit = card.limit - totalUsed;
+                    
+                    if (totalUsed + totalValue > card.limit) {
+                        const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL' 
+                        }).format(val);
+                        
+                        throw new Error(
+                            `❌ Limite insuficiente!\n\n` +
+                            `Valor da compra: ${formatCurrency(totalValue)}\n` +
+                            `Limite disponível: ${formatCurrency(availableLimit)}\n` +
+                            `Limite total: ${formatCurrency(card.limit)}\n\n` +
+                            `Falta: ${formatCurrency(totalValue - availableLimit)}`
+                        );
+                    }
+                    
+                    logger.log(`✅ Verificação de limite OK: ${formatCurrency(availableLimit)} disponível`);
+                    
                     const groupId = crypto.randomUUID();
                     const transactionsRef = ref(database, 'transactions');
                     const purchaseDate = transactionData.date || Date.now();
@@ -3885,27 +4075,47 @@
                     // Update state (keep original unfiltered data)
                     state.transactions = userTransactions;
                     
-                    // Update UI with ALL transactions for cards (no filter)
+                    // FASE 20.1: CENTRALIZAÇÃO DE UPDATES - Garantir reatividade total
+                    
+                    // 1. Dashboard Cards (Saldo, Receita, Despesa com variação %)
                     ui.updateDashboardCards(userTransactions);
                     
-                    // Render list with current filters applied
+                    // 2. Lista de Transações (com filtros aplicados)
                     ui.renderTransactionList();
                     
-                    // FASE 12.6: Render credit audit widget
+                    // 3. Widget de Auditoria de Crédito
                     ui.renderCreditAuditWidget();
                     
-                    // Update category counts
+                    // 4. Widgets de Cartões no Dashboard (Fatura + Limite)
+                    ui.renderDashboardWidgets();
+                    
+                    // 5. View de Cartões (se estiver ativa) - REALTIME UPDATE
+                    if (state.currentView === 'cards') {
+                        ui.renderCardsView();
+                    }
+                    
+                    // 6. Lista de Categorias (orçamentos e barras de progresso)
                     ui.renderCategoryList();
                     
-                    // Render charts
+                    // 7. Gráficos (Categorias + Fluxo)
                     ui.renderCharts();
+                    
+                    logger.log('✅ UI sincronizada com Firebase');
                     
                 } else {
                     console.log('📭 Nenhuma transação encontrada');
                     state.transactions = [];
+                    
+                    // Reset all UI components
                     ui.updateDashboardCards([]);
                     ui.renderTransactionList();
                     ui.renderCreditAuditWidget();
+                    ui.renderDashboardWidgets();
+                    
+                    if (state.currentView === 'cards') {
+                        ui.renderCardsView();
+                    }
+                    
                     ui.renderCategoryList();
                     ui.renderCharts();
                 }
@@ -4010,10 +4220,13 @@
                 });
             });
             
-            // ORDENAÇÃO ALFABÉTICA (pt-BR) - v2.0 - FORÇAR ATUALIZAÇÃO
+            // ORDENAÇÃO ALFABÉTICA (pt-BR) - VERSÃO FINAL
+            const antes = allCategories.map(c => c.name).join(', ');
             allCategories.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            const depois = allCategories.map(c => c.name).join(', ');
             
-            console.log('🔤 FASE 17: Categorias ordenadas alfabeticamente:', allCategories.map(c => c.name));
+            console.error('🔴 CÓDIGO NOVO CARREGADO! ANTES:', antes);
+            console.error('🟢 CÓDIGO NOVO CARREGADO! DEPOIS:', depois);
             
             // Renderizar options ordenadas
             allCategories.forEach(cat => {
@@ -6093,12 +6306,24 @@
                 }
                 
                 logger.log('💳 Cartões carregados:', state.cards.length);
+                
+                // FASE 20.1: ATUALIZAÇÃO COMPLETA quando cartões mudam
+                
+                // 1. Renderizar lista de cartões (modal/sidebar)
                 renderCards();
                 
-                // Also update cards view if currently active
+                // 2. Atualizar widgets de cartões no Dashboard
+                ui.renderDashboardWidgets();
+                
+                // 3. Atualizar view de cartões (se estiver ativa)
                 if (state.currentView === 'cards') {
                     ui.renderCardsView();
                 }
+                
+                // 4. Atualizar widget de auditoria (usa dados de cartões)
+                ui.renderCreditAuditWidget();
+                
+                logger.log('✅ Cartões sincronizados');
             });
         }
 
@@ -6124,13 +6349,23 @@
                 
                 logger.log('📋 Faturas carregadas:', Object.keys(state.invoices).length);
                 
-                // Update cards view if currently active
+                // FASE 20.1: ATUALIZAÇÃO quando faturas são pagas/modificadas
+                
+                // 1. Atualizar view de cartões (botões de pagar, status)
                 if (state.currentView === 'cards') {
                     ui.renderCardsView();
                 }
                 
-                // Update dashboard widgets
+                // 2. Atualizar lista de cartões (modais)
                 renderCards();
+                
+                // 3. Atualizar widgets de cartões no dashboard
+                ui.renderDashboardWidgets();
+                
+                // 4. Atualizar widget de auditoria
+                ui.renderCreditAuditWidget();
+                
+                logger.log('✅ Faturas sincronizadas');
             });
 
             // FASE 19: Listen to backups
