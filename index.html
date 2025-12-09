@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     
     <!-- Primary Meta Tags -->
     <title>Fintech App - Controle Financeiro Pessoal</title>
@@ -51,7 +51,143 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
     <style type="text/tailwindcss">
+        /* ============================================
+           FUNDAÇÃO MOBILE: Safe Areas & Z-Index System
+           ============================================ */
+        
+        @layer base {
+            /* Safe Area Variables (iPhone Notch Support) */
+            :root {
+                --sat: env(safe-area-inset-top);
+                --sab: env(safe-area-inset-bottom);
+                --sal: env(safe-area-inset-left);
+                --sar: env(safe-area-inset-right);
+                
+                /* Z-Index Architecture (Hierarquia Clara) */
+                --z-base: 1;
+                --z-sticky: 40;
+                --z-dropdown: 50;
+                --z-overlay: 60;
+                --z-modal: 70;
+                --z-toast: 80;
+            }
+            
+            /* Aplicar Safe Areas no Body */
+            body {
+                padding-top: var(--sat);
+                padding-bottom: var(--sab);
+                padding-left: var(--sal);
+                padding-right: var(--sar);
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+        }
+        
         @layer utilities {
+            /* Z-Index Utility Classes */
+            .z-base { z-index: var(--z-base); }
+            .z-sticky { z-index: var(--z-sticky); }
+            .z-dropdown { z-index: var(--z-dropdown); }
+            .z-overlay { z-index: var(--z-overlay); }
+            .z-modal { z-index: var(--z-modal); }
+            .z-toast { z-index: var(--z-toast); }
+            
+            /* ============================================
+               BOTTOM SHEET PATTERN (Mobile First)
+               ============================================ */
+            
+            /* Modal Container - Bottom Sheet no Mobile */
+            .modal-container {
+                @apply fixed bottom-0 left-0 right-0 top-auto;
+                @apply w-full max-h-[90vh];
+                @apply bg-white rounded-t-3xl rounded-b-none;
+                @apply shadow-2xl;
+                @apply transform translate-y-full;
+                @apply transition-transform duration-300 ease-out;
+            }
+            
+            /* Modal Ativo - Slide Up */
+            .modal-container.active {
+                @apply translate-y-0;
+            }
+            
+            /* Desktop: Modal Centralizado */
+            @media (min-width: 640px) {
+                .modal-container {
+                    @apply top-1/2 left-1/2 right-auto bottom-auto;
+                    @apply -translate-x-1/2 -translate-y-1/2;
+                    @apply max-w-md w-full max-h-[85vh];
+                    @apply rounded-2xl;
+                    transform: translate(-50%, -50%);
+                }
+                
+                .modal-container.active {
+                    transform: translate(-50%, -50%);
+                }
+            }
+            
+            /* Handle (Alça) do Bottom Sheet */
+            .modal-handle {
+                @apply w-12 h-1.5 bg-slate-300 rounded-full;
+                @apply mx-auto mt-3 mb-4;
+            }
+            
+            @media (min-width: 640px) {
+                .modal-handle {
+                    @apply hidden;
+                }
+            }
+            
+            /* Modal Header Fixo */
+            .modal-header {
+                @apply flex-shrink-0 px-6 py-4 border-b border-slate-200;
+            }
+            
+            /* Modal Body com Scroll */
+            .modal-body {
+                @apply flex-1 overflow-y-auto px-6 py-4;
+                @apply scrollbar-hide;
+            }
+            
+            /* Modal Footer Fixo */
+            .modal-footer {
+                @apply flex-shrink-0 px-6 py-4 border-t border-slate-200;
+                @apply bg-slate-50;
+            }
+            
+            /* Touch Targets (Regra dos 44px) */
+            .btn-mobile {
+                @apply min-h-[44px] px-6 py-3;
+                @apply text-base font-semibold;
+                @apply rounded-xl;
+                @apply transition-all duration-200;
+                @apply active:scale-95;
+            }
+            
+            /* Input Mobile Friendly */
+            .input-mobile {
+                @apply min-h-[44px] px-4 py-3;
+                @apply text-base;
+                @apply rounded-xl;
+                @apply border-2 border-slate-300;
+                @apply focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
+                @apply transition-all;
+            }
+            
+            /* Overlay Animation */
+            .modal-overlay {
+                @apply fixed inset-0 bg-slate-900/50 backdrop-blur-sm;
+                @apply opacity-0 transition-opacity duration-300;
+            }
+            
+            .modal-overlay.active {
+                @apply opacity-100;
+            }
+            
+            /* Scrollbar Hide */
             .scrollbar-hide::-webkit-scrollbar {
                 display: none;
             }
@@ -59,11 +195,22 @@
                 -ms-overflow-style: none;
                 scrollbar-width: none;
             }
-        }
-        
-        @layer base {
-            body {
-                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            
+            /* Mobile Optimizations */
+            @media (max-width: 768px) {
+                * {
+                    max-width: 100%;
+                }
+                
+                html, body {
+                    overflow-x: hidden !important;
+                }
+                
+                /* Prevent text overflow */
+                h1, h2, h3, h4, h5, h6, p, span {
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                }
             }
         }
     </style>
@@ -160,10 +307,21 @@
 <body class="min-h-screen antialiased bg-slate-50">
     
     <!-- Main App Container -->
+    <!-- Noscript fallback -->
+    <noscript>
+        <div class="fixed inset-0 bg-red-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md text-center">
+                <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">JavaScript Desabilitado</h2>
+                <p class="text-slate-600">Este aplicativo requer JavaScript para funcionar. Por favor, habilite JavaScript no seu navegador.</p>
+            </div>
+        </div>
+    </noscript>
+    
     <div id="app" class="min-h-screen">
         
         <!-- Loading View -->
-        <section id="view-loading" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <section id="view-loading" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-overlay flex items-center justify-center">
             <div class="bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center space-y-4">
                 <div class="relative w-16 h-16">
                     <div class="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
@@ -320,7 +478,7 @@
             </div>
             
             <!-- Fixed Header -->
-            <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+            <header class="bg-white border-b border-slate-200 sticky top-0 z-sticky shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center justify-between h-16">
                         <!-- Logo & Title -->
@@ -384,7 +542,7 @@
             </header>
 
             <!-- Month Navigation Bar -->
-            <div class="sticky top-16 z-40 bg-white border-b border-slate-200 shadow-sm print:hidden">
+            <div class="sticky top-16 z-sticky bg-white border-b border-slate-200 shadow-sm print:hidden">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div class="flex items-center justify-between">
                         <!-- Previous Month Button -->
@@ -577,34 +735,37 @@
                             
                             <!-- Actions Bar -->
                             <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap items-center justify-end gap-2">
-                                <!-- Export Buttons -->
+                                <!-- Export & Import Buttons (FASE 23) -->
                                 <div class="flex gap-2 print:hidden">
+                                    <button id="btn-import-csv" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-purple-400 hover:text-purple-600 transition-all" title="Importar CSV">
+                                        <i class="fas fa-file-upload mr-1.5"></i>Importar
+                                    </button>
                                     <button id="btn-export-csv" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-blue-300 hover:text-blue-600 transition-all" title="Exportar para CSV">
                                         <i class="fas fa-file-download mr-1.5"></i>CSV
                                     </button>
-                                    <button id="btn-print-report" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-purple-300 hover:text-purple-600 transition-all" title="Imprimir Relatório">
+                                    <button id="btn-print-report" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-medium hover:border-slate-400 hover:text-slate-700 transition-all" title="Imprimir Relatório">
                                         <i class="fas fa-print mr-1.5"></i>Imprimir
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Vertical Stack: Income + Expenses -->
-                            <div class="flex flex-col gap-6 p-6">
+                            <div class="flex flex-col gap-3 sm:gap-4 md:gap-6 p-2 sm:p-3 md:p-6 overflow-x-hidden max-w-full">
                                 
                                 <!-- Income Block (Priority) -->
                                 <div class="space-y-3">
                                     <!-- Income Header -->
-                                    <div class="flex items-center gap-3 px-3">
-                                        <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
-                                            <i class="fas fa-arrow-up text-white text-sm"></i>
+                                    <div class="flex items-center gap-1.5 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-3">
+                                        <div class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-sm">
+                                            <i class="fas fa-arrow-up text-white text-[10px] sm:text-xs md:text-sm"></i>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-800">Entradas</h3>
-                                        <span id="income-count" class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">0</span>
+                                        <h3 class="text-sm sm:text-base md:text-lg font-bold text-slate-800">Entradas</h3>
+                                        <span id="income-count" class="px-1.5 sm:px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold rounded-full">0</span>
                                     </div>
                                     
                                     <!-- Income List -->
-                                    <div class="bg-gradient-to-br from-emerald-50/30 to-transparent rounded-2xl border border-emerald-100/50 overflow-hidden">
-                                        <ul id="income-list" class="divide-y divide-emerald-100/50 max-h-96 overflow-y-auto">
+                                    <div class="bg-gradient-to-br from-emerald-50/30 to-transparent rounded-xl sm:rounded-2xl border border-emerald-100/50 overflow-hidden max-w-full">
+                                        <ul id="income-list" class="divide-y divide-emerald-100/50 max-h-[320px] sm:max-h-96 overflow-y-auto overflow-x-hidden">
                                             <!-- Income transactions will be rendered here -->
                                         </ul>
                                     </div>
@@ -613,17 +774,17 @@
                                 <!-- Expense Block -->
                                 <div class="space-y-3">
                                     <!-- Expense Header -->
-                                    <div class="flex items-center gap-3 px-3">
-                                        <div class="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
-                                            <i class="fas fa-arrow-down text-white text-sm"></i>
+                                    <div class="flex items-center gap-1.5 sm:gap-2 md:gap-3 px-1 sm:px-2 md:px-3">
+                                        <div class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
+                                            <i class="fas fa-arrow-down text-white text-[10px] sm:text-xs md:text-sm"></i>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-800">Saídas</h3>
-                                        <span id="expense-count" class="px-2 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full">0</span>
+                                        <h3 class="text-sm sm:text-base md:text-lg font-bold text-slate-800">Saídas</h3>
+                                        <span id="expense-count" class="px-1.5 sm:px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] sm:text-xs font-bold rounded-full">0</span>
                                     </div>
                                     
                                     <!-- Expense List -->
-                                    <div class="bg-gradient-to-br from-rose-50/30 to-transparent rounded-2xl border border-rose-100/50 overflow-hidden">
-                                        <ul id="expense-list" class="divide-y divide-rose-100/50 max-h-96 overflow-y-auto">
+                                    <div class="bg-gradient-to-br from-rose-50/30 to-transparent rounded-xl sm:rounded-2xl border border-rose-100/50 overflow-hidden max-w-full">
+                                        <ul id="expense-list" class="divide-y divide-rose-100/50 max-h-[320px] sm:max-h-96 overflow-y-auto overflow-x-hidden">
                                             <!-- Expense transactions will be rendered here -->
                                         </ul>
                                     </div>
@@ -688,19 +849,31 @@
 
         </section>
 
-        <!-- Transaction Modal -->
-        <div id="modal-transaction" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 my-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">
-                        <i class="fas fa-plus-circle mr-2 text-emerald-500"></i>
-                        <span id="modal-title">Nova Transação</span>
-                    </h2>
-                    <button id="btn-close-modal" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+        <!-- Transaction Modal (Bottom Sheet Pattern) -->
+        <div id="modal-transaction" class="hidden fixed inset-0 z-modal">
+            <!-- Overlay -->
+            <div class="modal-overlay" onclick="document.getElementById('modal-transaction').classList.add('hidden')"></div>
+            
+            <!-- Modal Container (Bottom Sheet on Mobile) -->
+            <div class="modal-container flex flex-col">
+                <!-- Handle (Alça do Bottom Sheet - Apenas Mobile) -->
+                <div class="modal-handle"></div>
+                
+                <!-- Modal Header (Fixo) -->
+                <div class="modal-header">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-slate-800">
+                            <i class="fas fa-plus-circle mr-2 text-emerald-500"></i>
+                            <span id="modal-title">Nova Transação</span>
+                        </h2>
+                        <button id="btn-close-modal" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all active:scale-95">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
                 </div>
+                
+                <!-- Modal Body (Scroll Interno) -->
+                <div class="modal-body">
 
                 <!-- Transaction Form -->
                 <form id="form-transaction" class="space-y-4">
@@ -900,36 +1073,47 @@
                     </div>
 
                     <!-- Error Message -->
-                    <div id="modal-message" class="hidden p-3 rounded-lg text-sm">
+                    <div id="modal-message" class="hidden p-3 rounded-lg text-sm mb-4">
                         <span id="modal-message-text"></span>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="flex gap-3 pt-2">
+                </form>
+                </div>
+                
+                <!-- Modal Footer (Fixo - Botões de Ação) -->
+                <div class="modal-footer">
+                    <div class="flex gap-4">
                         <button 
                             type="button" 
                             id="btn-cancel-transaction"
-                            class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
+                            class="btn-mobile flex-1 border-2 border-slate-300 text-slate-700 font-semibold hover:bg-slate-50"
                         >
                             Cancelar
                         </button>
                         <button 
                             type="submit" 
-                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                            form="form-transaction"
+                            class="btn-mobile flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg"
                         >
                             <i class="fas fa-save mr-2"></i>Salvar
                         </button>
                     </div>
-
-                </form>
+                </div>
             </div>
         </div>
 
         <!-- Category Modal -->
-        <div id="modal-category" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div id="modal-category" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="ui.hideCategoryModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-md w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6">
+                <div class="modal-header">
                     <h2 class="text-xl font-bold text-slate-800">
                         <i class="fas fa-folder-plus mr-2 text-emerald-500"></i>
                         Nova Categoria Pessoal
@@ -939,8 +1123,10 @@
                     </button>
                 </div>
 
-                <!-- Category Form -->
-                <form id="form-category" class="space-y-4">
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <!-- Category Form -->
+                    <form id="form-category" class="space-y-4">
                     
                     <!-- Category Name -->
                     <div>
@@ -1005,37 +1191,47 @@
                         </div>
                     </div>
 
-                    <!-- Error Message -->
-                    <div id="category-modal-message" class="hidden p-3 rounded-lg text-sm">
-                        <span id="category-modal-message-text"></span>
-                    </div>
+                        <!-- Error Message -->
+                        <div id="category-modal-message" class="hidden p-3 rounded-lg text-sm">
+                            <span id="category-modal-message-text"></span>
+                        </div>
+                    </form>
+                </div>
 
-                    <!-- Actions -->
-                    <div class="flex gap-3 pt-2">
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="flex gap-4">
                         <button 
                             type="button" 
                             id="btn-cancel-category"
-                            class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
+                            class="btn-mobile flex-1 px-4 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
                         >
                             Cancelar
                         </button>
                         <button 
-                            type="submit" 
-                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                            type="submit"
+                            form="form-category"
+                            class="btn-mobile flex-1 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
                         >
                             <i class="fas fa-save mr-2"></i>Criar
                         </button>
                     </div>
-
-                </form>
+                </div>
             </div>
         </div>
 
         <!-- Budget Modal -->
-        <div id="modal-budget" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+        <div id="modal-budget" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="ui.hideBudgetModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-2xl w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6 sticky top-0 bg-white pb-4 border-b">
+                <div class="modal-header">
                     <h2 class="text-xl font-bold text-slate-800">
                         <i class="fas fa-bullseye mr-2 text-purple-500"></i>
                         Definir Metas de Gastos
@@ -1045,52 +1241,64 @@
                     </button>
                 </div>
 
-                <p class="text-sm text-slate-600 mb-6">
-                    Configure o limite mensal de gastos para cada categoria. Você será alertado quando atingir 75% da meta.
-                </p>
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <p class="text-sm text-slate-600 mb-6">
+                        Configure o limite mensal de gastos para cada categoria. Você será alertado quando atingir 75% da meta.
+                    </p>
 
-                <!-- Search Bar -->
-                <div class="mb-4">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input 
-                            type="text" 
-                            id="budget-search" 
-                            placeholder="Buscar categoria..."
-                            class="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                        />
+                    <!-- Search Bar -->
+                    <div class="mb-4">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input 
+                                type="text" 
+                                id="budget-search" 
+                                placeholder="Buscar categoria..."
+                                class="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Budget List -->
+                    <div id="budget-list" class="space-y-3 max-h-[400px] overflow-y-auto">
+                        <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
 
-                <!-- Budget List -->
-                <div id="budget-list" class="space-y-3 max-h-[400px] overflow-y-auto">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-
-                <!-- Actions -->
-                <div class="flex gap-3 pt-6 mt-6 border-t sticky bottom-0 bg-white">
-                    <button 
-                        type="button" 
-                        id="btn-cancel-budget"
-                        class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        id="btn-save-budgets"
-                        class="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
-                    >
-                        <i class="fas fa-save mr-2"></i>Salvar Metas
-                    </button>
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="flex gap-4">
+                        <button 
+                            type="button" 
+                            id="btn-cancel-budget"
+                            class="btn-mobile flex-1 px-4 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            id="btn-save-budgets"
+                            class="btn-mobile flex-1 px-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                        >
+                            <i class="fas fa-save mr-2"></i>Salvar Metas
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Card Modal -->
-        <div id="modal-card" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div id="modal-card" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="ui.hideCardModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-lg w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
                 <!-- Modal Header -->
-                <div class="flex items-center justify-between mb-6">
+                <div class="modal-header">
                     <h2 class="text-xl font-bold text-slate-800">
                         <i class="fas fa-credit-card mr-2 text-blue-500"></i>
                         <span id="card-modal-title">Novo Cartão de Crédito</span>
@@ -1100,8 +1308,10 @@
                     </button>
                 </div>
 
-                <!-- Card Form -->
-                <form id="form-card" class="space-y-5">
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <!-- Card Form -->
+                    <form id="form-card" class="space-y-5">
                     
                     <!-- Card Name -->
                     <div>
@@ -1257,37 +1467,47 @@
                         </div>
                     </div>
 
-                    <!-- Error Message -->
-                    <div id="card-modal-message" class="hidden p-3 rounded-lg text-sm">
-                        <span id="card-modal-message-text"></span>
-                    </div>
+                        <!-- Error Message -->
+                        <div id="card-modal-message" class="hidden p-3 rounded-lg text-sm">
+                            <span id="card-modal-message-text"></span>
+                        </div>
+                    </form>
+                </div>
 
-                    <!-- Actions -->
-                    <div class="flex gap-3 pt-2">
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="flex gap-4">
                         <button 
                             type="button" 
                             id="btn-cancel-card"
-                            class="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
+                            class="btn-mobile flex-1 px-4 border border-slate-300 text-slate-700 font-medium rounded-xl hover:bg-slate-50 transition-all"
                         >
                             Cancelar
                         </button>
                         <button 
-                            type="submit" 
-                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+                            type="submit"
+                            form="form-card"
+                            class="btn-mobile flex-1 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
                         >
                             <i class="fas fa-save mr-2"></i>Salvar Cartão
                         </button>
                     </div>
-
-                </form>
+                </div>
             </div>
         </div>
 
         <!-- Delete Confirmation Modal (FASE 13) -->
-        <div id="modal-delete-confirm" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-auto transform transition-all">
-                <!-- Header -->
-                <div class="px-6 pt-6 pb-4 border-b border-slate-200">
+        <div id="modal-delete-confirm" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="hideDeleteModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-md w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
+                <!-- Modal Header -->
+                <div class="modal-header border-b border-slate-200">
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4">
                             <i class="fas fa-trash-alt text-red-600 text-xl"></i>
@@ -1305,8 +1525,8 @@
                     </div>
                 </div>
 
-                <!-- Body -->
-                <div class="px-6 py-6">
+                <!-- Modal Body -->
+                <div class="modal-body">
                     <!-- Transaction Info -->
                     <div id="delete-transaction-info" class="mb-5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
                         <div class="flex items-center justify-between">
@@ -1337,19 +1557,19 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="px-6 pb-6">
+                <!-- Modal Footer -->
+                <div class="modal-footer">
                     <!-- Single Transaction Actions -->
-                    <div id="delete-actions-single" class="hidden flex gap-3">
+                    <div id="delete-actions-single" class="hidden flex gap-4">
                         <button 
                             id="btn-cancel-delete"
-                            class="flex-1 px-4 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
+                            class="btn-mobile flex-1 px-4 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
                         >
                             <i class="fas fa-times mr-2"></i>Cancelar
                         </button>
                         <button 
                             id="btn-delete-single-confirm"
-                            class="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                            class="btn-mobile flex-1 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
                         >
                             <i class="fas fa-trash-alt mr-2"></i>Excluir
                         </button>
@@ -1359,7 +1579,7 @@
                     <div id="delete-actions-recurring" class="hidden space-y-3">
                         <button 
                             id="btn-delete-this-only"
-                            class="w-full px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all text-left flex items-center"
+                            class="btn-mobile w-full px-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all text-left flex items-center"
                         >
                             <i class="fas fa-file text-lg mr-3 w-5"></i>
                             <div class="flex-1">
@@ -1369,7 +1589,7 @@
                         </button>
                         <button 
                             id="btn-delete-this-and-future"
-                            class="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-xl hover:shadow-lg transition-all text-left flex items-center"
+                            class="btn-mobile w-full px-4 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold rounded-xl hover:shadow-lg transition-all text-left flex items-center"
                         >
                             <i class="fas fa-files text-lg mr-3 w-5"></i>
                             <div class="flex-1">
@@ -1379,7 +1599,7 @@
                         </button>
                         <button 
                             id="btn-cancel-delete-recurring"
-                            class="w-full px-4 py-3 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
+                            class="btn-mobile w-full px-4 border-2 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-all"
                         >
                             <i class="fas fa-times mr-2"></i>Cancelar
                         </button>
@@ -1389,10 +1609,17 @@
         </div>
 
         <!-- FASE 19: Settings Modal -->
-        <div id="modal-settings" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full mx-auto transform transition-all my-8">
-                <!-- Header -->
-                <div class="px-6 pt-6 pb-4 border-b border-slate-200">
+        <div id="modal-settings" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="ui.hideSettingsModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-3xl w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
+                <!-- Modal Header -->
+                <div class="modal-header border-b border-slate-200">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
@@ -1412,8 +1639,10 @@
                     </div>
                 </div>
 
-                <!-- Tabs -->
-                <div class="px-6 pt-4">
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <!-- Tabs -->
+                    <div class="pb-4">
                     <div class="flex gap-2 border-b border-slate-200">
                         <button 
                             id="tab-profile"
@@ -1498,6 +1727,27 @@
                                         <i class="fas fa-save mr-2"></i>Criar Backup
                                     </button>
                                 </div>
+                                
+                                <!-- Cleanup Duplicates -->
+                                <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="text-sm font-bold text-slate-800 flex items-center">
+                                                <i class="fas fa-broom text-amber-600 mr-2"></i>
+                                                Limpeza de Duplicatas
+                                            </h4>
+                                            <p class="text-xs text-slate-600 mt-1">
+                                                Remove transações duplicadas automaticamente
+                                            </p>
+                                        </div>
+                                        <button 
+                                            onclick="cleanupDuplicates()"
+                                            class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all text-sm whitespace-nowrap"
+                                        >
+                                            <i class="fas fa-broom mr-2"></i>Limpar
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <!-- Backup List -->
                                 <div id="backup-list" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
@@ -1533,7 +1783,152 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!-- FASE 23: Import CSV Modal (Nubank Support) -->
+        <div id="modal-import-csv" class="hidden fixed inset-0 z-overlay flex items-end md:items-center justify-center p-0 md:p-4">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="ui.hideImportModal()"></div>
+            
+            <!-- Modal Container -->
+            <div class="modal-container max-w-2xl w-full">
+                <!-- Handle (mobile only) -->
+                <div class="modal-handle"></div>
+                
+                <!-- Modal Header -->
+                <div class="modal-header border-b border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                <i class="fas fa-file-upload text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-800">Importar Transações</h2>
+                                <p class="text-sm text-slate-500 mt-0.5">CSV do Nubank ou formato personalizado</p>
+                            </div>
+                        </div>
+                        <button id="btn-close-import-modal" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+                            <i class="fas fa-times text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body space-y-6">
+                    
+                    <!-- Import Mode Selection -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-magic text-purple-500 mr-2"></i>Modelo de Importação
+                        </label>
+                        <select id="import-mode" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all">
+                            <option value="system">💾 Sistema (Reimportar Export)</option>
+                            <option value="nubank">🟣 Nubank (Detecção Automática)</option>
+                            <option value="manual">⚙️ Padrão (Mapear Colunas)</option>
+                        </select>
+                    </div>
+
+                    <!-- Target Card Selection (for credit imports) -->
+                    <div id="import-card-selection" class="hidden">
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-credit-card text-blue-500 mr-2"></i>Destino (Cartão de Crédito) <span class="text-rose-500">*</span>
+                        </label>
+                        <select id="import-target-card" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all" required>
+                            <option value="">Selecione um cartão...</option>
+                        </select>
+                        <p class="text-xs text-rose-600 mt-2 font-semibold">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            Obrigatório: As transações do Nubank serão vinculadas ao cartão selecionado
+                        </p>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-file-csv text-emerald-500 mr-2"></i>Arquivo CSV
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="file" 
+                                id="csv-file-input" 
+                                accept=".csv"
+                                class="block w-full text-sm text-slate-500
+                                    file:mr-4 file:py-3 file:px-6
+                                    file:rounded-xl file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-gradient-to-r file:from-purple-500 file:to-purple-600
+                                    file:text-white
+                                    hover:file:from-purple-600 hover:file:to-purple-700
+                                    file:cursor-pointer file:transition-all
+                                    cursor-pointer
+                                    border-2 border-dashed border-slate-300 rounded-xl
+                                    hover:border-purple-400 transition-all p-4"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Nubank Instructions -->
+                    <div id="nubank-instructions" class="hidden bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-xl p-5">
+                        <h3 class="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                            <i class="fas fa-lightbulb"></i>
+                            Como exportar do Nubank
+                        </h3>
+                        <ol class="text-sm text-purple-800 space-y-2 list-decimal list-inside">
+                            <li>Abra o app do Nubank</li>
+                            <li>Vá em <strong>Cartão de Crédito</strong> → <strong>Fatura</strong></li>
+                            <li>Toque nos <strong>3 pontinhos</strong> (⋮) no canto superior</li>
+                            <li>Selecione <strong>"Exportar fatura"</strong></li>
+                            <li>Escolha <strong>CSV</strong> e compartilhe para este dispositivo</li>
+                        </ol>
+                        <p class="text-xs text-purple-700 mt-3 font-medium">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            O sistema detectará automaticamente as colunas: data, título e valor
+                        </p>
+                    </div>
+
+                    <!-- Manual Mode Instructions -->
+                    <div id="manual-instructions" class="hidden bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200 rounded-xl p-5">
+                        <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <i class="fas fa-info-circle"></i>
+                            Formato do CSV
+                        </h3>
+                        <p class="text-sm text-slate-700 mb-3">
+                            Seu arquivo CSV deve conter as seguintes colunas (primeira linha):
+                        </p>
+                        <div class="bg-white rounded-lg p-3 font-mono text-xs text-slate-600 border border-slate-300">
+                            data,descricao,valor,tipo
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3">
+                            <strong>Formato de data:</strong> YYYY-MM-DD ou DD/MM/YYYY<br>
+                            <strong>Tipo:</strong> receita ou despesa<br>
+                            <strong>Separador:</strong> vírgula (,)
+                        </p>
+                    </div>
+
+                    <!-- Preview Area -->
+                    <div id="import-preview" class="hidden">
+                        <h3 class="font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-eye text-blue-500 mr-2"></i>Pré-visualização
+                        </h3>
+                        <div id="import-preview-content" class="bg-slate-50 border border-slate-200 rounded-xl p-4 max-h-60 overflow-y-auto text-sm">
+                            <!-- Will be populated by JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="flex gap-4">
+                        <button id="btn-cancel-import" class="btn-mobile flex-1 px-4 bg-white border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-semibold">
+                            Cancelar
+                        </button>
+                        <button id="btn-process-import" class="btn-mobile flex-1 px-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-check mr-2"></i>Importar
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1569,7 +1964,7 @@
             </header>
 
             <!-- FASE 14.7: Temporal Navigation Bar -->
-            <div class="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+            <div class="bg-white border-b border-slate-200 sticky top-16 z-sticky shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center justify-between py-4">
                         <!-- Previous Month -->
@@ -1718,7 +2113,7 @@
         // PRODUCTION MODE (set to true to disable debug logs)
         // ============================================
         
-        const PRODUCTION_MODE = true;
+        const PRODUCTION_MODE = false; // TEMPORÁRIO: Debug ativado para encontrar erro
         
         // Debug logger (only logs in development mode)
         const logger = {
@@ -1940,11 +2335,27 @@
                 btnSaveDisplayName: document.getElementById('btn-save-display-name'),
                 btnCreateBackup: document.getElementById('btn-create-backup'),
                 backupList: document.getElementById('backup-list'),
-                btnResetAll: document.getElementById('btn-reset-all')
+                btnResetAll: document.getElementById('btn-reset-all'),
+                
+                // FASE 23: Import CSV Modal
+                modalImportCSV: document.getElementById('modal-import-csv'),
+                btnImportCSV: document.getElementById('btn-import-csv'),
+                btnCloseImportModal: document.getElementById('btn-close-import-modal'),
+                btnCancelImport: document.getElementById('btn-cancel-import'),
+                btnProcessImport: document.getElementById('btn-process-import'),
+                importMode: document.getElementById('import-mode'),
+                importCardSelection: document.getElementById('import-card-selection'),
+                importTargetCard: document.getElementById('import-target-card'),
+                csvFileInput: document.getElementById('csv-file-input'),
+                nubankInstructions: document.getElementById('nubank-instructions'),
+                manualInstructions: document.getElementById('manual-instructions'),
+                importPreview: document.getElementById('import-preview'),
+                importPreviewContent: document.getElementById('import-preview-content')
             },
 
             /**
              * Show a specific view and hide others
+             * FASE 23: Persistência de estado com localStorage
              */
             showView(viewName) {
                 const views = ['login', 'dashboard', 'loading', 'cards'];
@@ -1955,6 +2366,12 @@
                     }
                 });
                 state.currentView = viewName;
+                
+                // FASE 23: Salvar view atual no localStorage (exceto login/loading)
+                if (viewName !== 'login' && viewName !== 'loading') {
+                    localStorage.setItem('lastView', viewName);
+                    logger.log('💾 View salva:', viewName);
+                }
                 
                 // Render cards view when switching to it
                 if (viewName === 'cards') {
@@ -2122,6 +2539,12 @@
             showTransactionModal(type = 'despesa', transaction = null) {
                 this.elements.modalTransaction.classList.remove('hidden');
                 
+                // Trigger Bottom Sheet animation
+                requestAnimationFrame(() => {
+                    const container = this.elements.modalTransaction.querySelector('.modal-container');
+                    if (container) container.classList.add('active');
+                });
+                
                 if (transaction) {
                     // EDIT MODE
                     state.editingTransaction = transaction;
@@ -2214,10 +2637,23 @@
             },
 
             hideTransactionModal() {
-                this.elements.modalTransaction.classList.add('hidden');
-                this.elements.formTransaction.reset();
-                this.elements.modalMessage.classList.add('hidden');
-                state.editingTransaction = null;
+                const container = this.elements.modalTransaction.querySelector('.modal-container');
+                
+                // Animate out before hiding
+                if (container) {
+                    container.classList.remove('active');
+                    setTimeout(() => {
+                        this.elements.modalTransaction.classList.add('hidden');
+                        this.elements.formTransaction.reset();
+                        this.elements.modalMessage.classList.add('hidden');
+                        state.editingTransaction = null;
+                    }, 300); // Match transition duration
+                } else {
+                    this.elements.modalTransaction.classList.add('hidden');
+                    this.elements.formTransaction.reset();
+                    this.elements.modalMessage.classList.add('hidden');
+                    state.editingTransaction = null;
+                }
             },
 
             /**
@@ -2243,6 +2679,13 @@
              */
             showCategoryModal() {
                 this.elements.modalCategory.classList.remove('hidden');
+                
+                // Trigger Bottom Sheet animation
+                requestAnimationFrame(() => {
+                    const container = this.elements.modalCategory.querySelector('.modal-container');
+                    if (container) container.classList.add('active');
+                });
+                
                 this.elements.formCategory.reset();
                 this.elements.categoryModalMessage.classList.add('hidden');
                 
@@ -2258,9 +2701,21 @@
             },
 
             hideCategoryModal() {
-                this.elements.modalCategory.classList.add('hidden');
-                this.elements.formCategory.reset();
-                this.elements.categoryModalMessage.classList.add('hidden');
+                const container = this.elements.modalCategory.querySelector('.modal-container');
+                
+                // Animate out before hiding
+                if (container) {
+                    container.classList.remove('active');
+                    setTimeout(() => {
+                        this.elements.modalCategory.classList.add('hidden');
+                        this.elements.formCategory.reset();
+                        this.elements.categoryModalMessage.classList.add('hidden');
+                    }, 300);
+                } else {
+                    this.elements.modalCategory.classList.add('hidden');
+                    this.elements.formCategory.reset();
+                    this.elements.categoryModalMessage.classList.add('hidden');
+                }
             },
 
             /**
@@ -2482,12 +2937,29 @@
                                txnDate.getFullYear() === currentYear;
                     });
                     
-                    const invoiceValue = invoiceTransactions.reduce((sum, t) => sum + t.value, 0);
+                    // Calcular total: receitas SUBTRAEM (créditos), despesas SOMAM
+                    const invoiceValue = invoiceTransactions.reduce((sum, t) => {
+                        return t.type === 'receita' ? sum - t.value : sum + t.value;
+                    }, 0);
                     
-                    // FASE 20.2: Calcular uso total do limite (todas as transações não pagas)
+                    // FASE 20.2: Calcular uso REAL do limite
+                    // 🔧 CORREÇÃO CRÍTICA: Apenas faturas FECHADAS (não pagas ainda)
+                    // NÃO incluir faturas futuras (seria somar 12x a mesma parcela!)
+                    const now = new Date();
                     const totalUsed = state.transactions
-                        .filter(t => t.cardId === card.id && t.status !== 'confirmada')
-                        .reduce((sum, t) => sum + t.value, 0);
+                        .filter(t => {
+                            if (t.cardId !== card.id) return false;
+                            if (t.status === 'confirmada') return false; // Já foi pago
+                            
+                            // Apenas faturas que já FECHARAM (data <= hoje)
+                            const txnDate = new Date(t.date);
+                            const closingDate = new Date(txnDate.getFullYear(), txnDate.getMonth(), card.closingDay);
+                            
+                            return closingDate <= now;
+                        })
+                        .reduce((sum, t) => {
+                            return t.type === 'receita' ? sum - t.value : sum + t.value;
+                        }, 0);
                     
                     const available = card.limit - totalUsed;
                     const percentUsed = (totalUsed / card.limit) * 100;
@@ -2586,10 +3058,24 @@
                 
                 // Helper function to render a transaction item
                 const renderTransaction = (txn) => {
+                    // Dicionário de tradução para categorias hardcoded antigas
+                    const categoryTranslations = {
+                        'salary': '💰 Salário',
+                        'food': '🍔 Alimentação',
+                        'transport': '🚗 Transporte',
+                        'utilities': '📱 Contas',
+                        'health': '🏥 Saúde',
+                        'entertainment': '🎮 Lazer',
+                        'education': '📚 Educação',
+                        'shopping': '🛍️ Compras',
+                        'investments': '📈 Investimentos',
+                        'other': '📦 Outros'
+                    };
+                    
                     // Get category details
                     const category = allCategories[txn.category];
-                    const categoryName = category ? category.name : txn.category;
-                    const categoryIcon = category ? category.icon : '📦';
+                    const categoryName = category ? category.name : (categoryTranslations[txn.category] || txn.category);
+                    const categoryIcon = category ? category.icon : (txn.category in categoryTranslations ? categoryTranslations[txn.category].split(' ')[0] : '📦');
                     
                     const isIncome = txn.type === 'receita';
                     const colorClass = isIncome ? 'text-emerald-600' : 'text-rose-600';
@@ -2603,60 +3089,60 @@
                         : `<button onclick="event.stopPropagation(); toggleTransactionStatus('${txn.id}', 'pendente')" class="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 hover:bg-amber-200 rounded-full transition-all cursor-pointer" title="Clique para marcar como confirmada"><span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span></button>`;
                     
                     return `
-                        <div class="px-4 md:px-6 py-4 hover:bg-slate-50/50 transition-all group">
-                            <div class="flex items-center gap-4">
+                        <div class="px-2 sm:px-3 md:px-6 py-2.5 sm:py-3 md:py-4 hover:bg-slate-50/50 transition-all group">
+                            <div class="flex items-start gap-2 sm:gap-3 md:gap-4">
                                 <!-- Icon Circle -->
                                 <div onclick="openTransactionForEdit('${txn.id}')" class="relative flex-shrink-0 cursor-pointer">
-                                    <div class="${bgGradient} ${borderColor} border-2 w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 hover:scale-110 transition-transform duration-200">
-                                        <span class="text-2xl">${categoryIcon}</span>
+                                    <div class="${bgGradient} ${borderColor} border-2 w-10 h-10 sm:w-11 sm:h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shadow-sm hover:scale-105 transition-transform duration-200">
+                                        <span class="text-lg sm:text-xl md:text-2xl">${categoryIcon}</span>
                                     </div>
-                                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border-2 ${borderColor}">
-                                        <i class="fas ${icon} ${colorClass} text-[10px]"></i>
+                                    <div class="absolute -bottom-0.5 -right-0.5 md:-bottom-1 md:-right-1 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-white rounded-full flex items-center justify-center shadow-md border ${borderColor}">
+                                        <i class="fas ${icon} ${colorClass} text-[7px] sm:text-[8px] md:text-[10px]"></i>
                                     </div>
                                 </div>
                                 
                                 <!-- Transaction Info -->
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <h4 class="font-bold text-slate-800 text-base truncate">
-                                            ${txn.description}
-                                            ${txn.installment ? `<span class="text-xs text-slate-400 font-normal">(${txn.installment.current}/${txn.installment.total})</span>` : ''}
+                                <div class="flex-1 min-w-0 overflow-hidden pr-1">
+                                    <div class="flex items-start gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm md:text-base break-words flex-1 leading-tight">
+                                            <span class="block">${txn.description}</span>
+                                            ${txn.installment ? `<span class="text-[10px] sm:text-xs text-slate-400 font-normal whitespace-nowrap">(${txn.installment.current}/${txn.installment.total})</span>` : ''}
+                                            ${txn.isSubscription ? `<span class="inline-flex items-center px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] md:text-[10px] font-semibold bg-purple-100 text-purple-700 ml-1"><i class="fas fa-sync-alt mr-0.5"></i>SUB</span>` : ''}
                                         </h4>
-                                        ${statusBadge}
+                                        <div class="flex-shrink-0">${statusBadge}</div>
                                     </div>
-                                    <div class="flex items-center gap-2 text-xs text-slate-500">
-                                        <span class="font-medium">${categoryName}</span>
-                                        <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                        <span>${formatDate(txn.date)}</span>
+                                    <div class="flex flex-wrap items-center gap-1 md:gap-2 text-[10px] md:text-xs text-slate-500">
+                                        <span class="font-medium truncate max-w-[100px] md:max-w-none">${categoryName}</span>
+                                        <span class="w-1 h-1 bg-slate-300 rounded-full hidden md:inline-block"></span>
+                                        <span class="whitespace-nowrap">${formatDate(txn.date)}</span>
                                         ${txn.installment && txn.installment.current === txn.installment.total ? `
-                                        <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
                                         <button 
                                             onclick="event.stopPropagation(); extendRecurrence('${txn.groupId}', '${txn.id}')" 
-                                            class="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+                                            class="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline text-[10px] md:text-xs"
                                             title="Prorrogar +12 meses"
                                         >
-                                            🔄 Prorrogar +12m
+                                            🔄 +12m
                                         </button>
                                         ` : ''}
                                     </div>
                                 </div>
                                 
                                 <!-- Value & Actions -->
-                                <div class="flex items-center gap-3 flex-shrink-0">
-                                    <div onclick="openTransactionForEdit('${txn.id}')" class="text-right cursor-pointer hover:scale-105 transition-transform p-2 -m-2 rounded-lg hover:bg-slate-100">
-                                        <p class="text-lg md:text-xl font-bold ${colorClass} tracking-tight">
+                                <div class="flex items-start gap-0.5 sm:gap-1 md:gap-2 flex-shrink-0 pl-1">
+                                    <div onclick="openTransactionForEdit('${txn.id}')" class="text-right cursor-pointer hover:scale-105 transition-transform p-0.5 sm:p-1 md:p-2 -m-0.5 sm:-m-1 md:-m-2 rounded-lg hover:bg-slate-100">
+                                        <p class="text-sm sm:text-base md:text-lg font-bold ${colorClass} tracking-tight whitespace-nowrap leading-none">
                                             ${isIncome ? '+' : '-'} ${formatCurrency(txn.value)}
                                         </p>
-                                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                                            ${txn.status === 'confirmada' ? 'Confirmada' : 'Pendente'}
+                                        <p class="text-[7px] sm:text-[8px] md:text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">
+                                            ${txn.status === 'confirmada' ? 'OK' : 'Pend'}
                                         </p>
                                     </div>
                                     <button 
                                         onclick="event.stopPropagation(); deleteTransaction('${txn.id}')" 
-                                        class="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl transition-all transform hover:scale-110"
+                                        class="opacity-50 md:opacity-0 md:group-hover:opacity-100 w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-lg md:rounded-xl transition-all transform hover:scale-110 flex-shrink-0"
                                         title="Excluir transação"
                                     >
-                                        <i class="fas fa-trash-alt text-sm"></i>
+                                        <i class="fas fa-trash-alt text-[10px] sm:text-xs md:text-sm"></i>
                                     </button>
                                 </div>
                             </div>
@@ -3370,7 +3856,15 @@
                 return txnMonth === month && txnYear === year;
             });
             
-            const total = invoiceTransactions.reduce((sum, t) => sum + t.value, 0);
+            // 💰 NOVA LÓGICA: Receitas SUBTRAEM do total (estornos/créditos)
+            // Despesas SOMAM, Receitas SUBTRAEM
+            const total = invoiceTransactions.reduce((sum, t) => {
+                if (t.type === 'receita') {
+                    return sum - t.value;  // Receita = crédito na fatura
+                } else {
+                    return sum + t.value;  // Despesa = débito na fatura
+                }
+            }, 0);
             
             // Determine status
             const today = new Date();
@@ -3508,10 +4002,22 @@
                     }
                     
                     // FASE 20.2: TRAVA DE LIMITE - Verificar saldo disponível
+                    // 🔧 CORREÇÃO CRÍTICA: Apenas faturas FECHADAS (não pagas ainda)
+                    const now = new Date();
                     const totalUsed = state.transactions
-                        .filter(t => t.cardId === transactionData.cardId && 
-                                     (t.status === 'pendente' || t.status === 'confirmada'))
-                        .reduce((sum, t) => sum + t.value, 0);
+                        .filter(t => {
+                            if (t.cardId !== transactionData.cardId) return false;
+                            if (t.status === 'confirmada') return false; // Já foi pago
+                            
+                            // Apenas faturas que já FECHARAM (data <= hoje)
+                            const txnDate = new Date(t.date);
+                            const closingDate = new Date(txnDate.getFullYear(), txnDate.getMonth(), card.closingDay);
+                            
+                            return closingDate <= now;
+                        })
+                        .reduce((sum, t) => {
+                            return t.type === 'receita' ? sum - t.value : sum + t.value;
+                        }, 0);
                     
                     const availableLimit = card.limit - totalUsed;
                     
@@ -3740,15 +4246,35 @@
             
             // Show modal
             modal.classList.remove('hidden');
+            
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = modal.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
         }
 
         /**
          * FASE 13: Hide delete confirmation modal
          */
         function hideDeleteConfirmationModal() {
-            ui.elements.modalDeleteConfirm.classList.add('hidden');
-            pendingDeletion = null;
+            const container = ui.elements.modalDeleteConfirm.querySelector('.modal-container');
+            
+            // Animate out before hiding
+            if (container) {
+                container.classList.remove('active');
+                setTimeout(() => {
+                    ui.elements.modalDeleteConfirm.classList.add('hidden');
+                    pendingDeletion = null;
+                }, 300);
+            } else {
+                ui.elements.modalDeleteConfirm.classList.add('hidden');
+                pendingDeletion = null;
+            }
         }
+        
+        // Make available globally for onclick
+        window.hideDeleteModal = hideDeleteConfirmationModal;
 
         /**
          * FASE 13: Execute deletion based on mode
@@ -3824,6 +4350,126 @@
                 logger.error('❌ Erro ao executar exclusão:', error);
                 alert(error.message || 'Erro ao excluir transação.');
                 ui.setLoading(false);
+            }
+        }
+
+        /**
+         * 🧹 LIMPEZA DE DUPLICATAS - Detecta e remove transações duplicadas
+         * Critérios: mesmo cartão, descrição, valor, e número de parcela
+         */
+        async function cleanupDuplicates() {
+            if (!auth.currentUser) {
+                alert('Você precisa estar logado.');
+                return;
+            }
+
+            const confirmed = confirm(
+                '🧹 LIMPEZA DE DUPLICATAS\n\n' +
+                'Esta função irá:\n' +
+                '• Analisar todas as transações\n' +
+                '• Detectar duplicatas (mesmo cartão + descrição + valor + parcela)\n' +
+                '• Manter apenas a mais antiga de cada grupo\n' +
+                '• Remover as duplicatas\n\n' +
+                'ATENÇÃO: Esta ação não pode ser desfeita!\n' +
+                'Recomendamos criar um backup antes.\n\n' +
+                'Deseja continuar?'
+            );
+
+            if (!confirmed) return;
+
+            try {
+                ui.setLoading(true);
+                logger.log('🧹 Iniciando limpeza de duplicatas...');
+
+                const userId = auth.currentUser.uid;
+                const duplicatesToDelete = [];
+                const duplicateGroups = new Map();
+
+                // 1. Agrupar transações por cartão + descrição + valor + parcela
+                state.transactions.forEach(txn => {
+                    if (!txn.cardId) return; // Ignorar transações sem cartão
+                    
+                    // Criar chave única: cartão + descrição + valor + parcela
+                    const installmentKey = txn.installment 
+                        ? `_${txn.installment.current}_${txn.installment.total}` 
+                        : '_single';
+                    const uniqueKey = `${txn.cardId}_${txn.description}_${txn.value.toFixed(2)}${installmentKey}`;
+                    
+                    if (!duplicateGroups.has(uniqueKey)) {
+                        duplicateGroups.set(uniqueKey, []);
+                    }
+                    duplicateGroups.get(uniqueKey).push(txn);
+                });
+
+                // 2. Identificar duplicatas (grupos com mais de 1 transação)
+                duplicateGroups.forEach((group, key) => {
+                    if (group.length > 1) {
+                        // Ordenar por data de criação (mais antiga primeiro)
+                        group.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                        
+                        // Manter a primeira (mais antiga), marcar restantes para exclusão
+                        const toKeep = group[0];
+                        const toDelete = group.slice(1);
+                        
+                        logger.log(`🔍 Duplicata encontrada: ${toKeep.description}${toKeep.installment ? ` (${toKeep.installment.current}/${toKeep.installment.total})` : ''}`);
+                        logger.log(`  → Mantendo: ID ${toKeep.id} (${new Date(toKeep.createdAt || toKeep.date).toLocaleString()})`);
+                        logger.log(`  → Removendo: ${toDelete.length} duplicata(s)`);
+                        
+                        duplicatesToDelete.push(...toDelete);
+                    }
+                });
+
+                if (duplicatesToDelete.length === 0) {
+                    ui.setLoading(false);
+                    alert('✅ Nenhuma duplicata encontrada!\n\nSuas transações estão limpas.');
+                    return;
+                }
+
+                // 3. Confirmar exclusão
+                const finalConfirm = confirm(
+                    `🧹 DUPLICATAS DETECTADAS\n\n` +
+                    `Encontradas ${duplicatesToDelete.length} transação(ões) duplicada(s).\n\n` +
+                    `Exemplos:\n` +
+                    duplicatesToDelete.slice(0, 5).map(d => 
+                        `• ${d.description}${d.installment ? ` (${d.installment.current}/${d.installment.total})` : ''} - ${formatCurrency(d.value)}`
+                    ).join('\n') +
+                    (duplicatesToDelete.length > 5 ? `\n... e mais ${duplicatesToDelete.length - 5}` : '') +
+                    `\n\nConfirma a exclusão?`
+                );
+
+                if (!finalConfirm) {
+                    ui.setLoading(false);
+                    return;
+                }
+
+                // 4. Remover duplicatas do Firebase
+                logger.log(`🗑️ Removendo ${duplicatesToDelete.length} duplicatas...`);
+                let deletedCount = 0;
+
+                for (const txn of duplicatesToDelete) {
+                    try {
+                        const txnRef = ref(database, `transactions/${txn.id}`);
+                        await remove(txnRef);
+                        deletedCount++;
+                        logger.log(`✅ Removido: ${txn.description}${txn.installment ? ` (${txn.installment.current}/${txn.installment.total})` : ''}`);
+                    } catch (error) {
+                        logger.error(`❌ Erro ao remover ${txn.id}:`, error);
+                    }
+                }
+
+                ui.setLoading(false);
+                logger.log(`✅ Limpeza concluída: ${deletedCount}/${duplicatesToDelete.length} duplicatas removidas`);
+                
+                alert(
+                    `✅ Limpeza concluída!\n\n` +
+                    `${deletedCount} duplicata(s) removida(s) com sucesso.\n\n` +
+                    `Suas faturas estão limpas! 🎉`
+                );
+
+            } catch (error) {
+                ui.setLoading(false);
+                logger.error('❌ Erro na limpeza de duplicatas:', error);
+                alert('Erro ao limpar duplicatas. Verifique o console para detalhes.');
             }
         }
 
@@ -4221,12 +4867,7 @@
             });
             
             // ORDENAÇÃO ALFABÉTICA (pt-BR) - VERSÃO FINAL
-            const antes = allCategories.map(c => c.name).join(', ');
             allCategories.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-            const depois = allCategories.map(c => c.name).join(', ');
-            
-            console.error('🔴 CÓDIGO NOVO CARREGADO! ANTES:', antes);
-            console.error('🟢 CÓDIGO NOVO CARREGADO! DEPOIS:', depois);
             
             // Renderizar options ordenadas
             allCategories.forEach(cat => {
@@ -4323,9 +4964,15 @@
 
         /**
          * FASE 14: Select a card (global wrapper for onclick)
+         * FASE 23: Persistência do cartão selecionado
          */
         function selectCard(cardId) {
             state.selectedInvoice.cardId = cardId;
+            
+            // FASE 23: Salvar cartão selecionado no localStorage
+            localStorage.setItem('lastCardId', cardId);
+            logger.log('💾 Cartão salvo:', cardId);
+            
             ui.renderCardSelector();
             ui.renderInvoiceDetails();
         }
@@ -4661,6 +5308,25 @@
 
                 // FILTRAR: Remover chave 'backups' para evitar aninhamento
                 const { backups: _, ...userDataFiltered } = userData;
+                
+                // 🔧 CORREÇÃO: Buscar transações da raiz global (filtradas por userId)
+                logger.log('📦 Capturando transações da raiz global...');
+                const transactionsRef = ref(database, 'transactions');
+                const transactionsQuery = query(
+                    transactionsRef,
+                    orderByChild('userId'),
+                    equalTo(userId)
+                );
+                const transactionsSnap = await get(transactionsQuery);
+                
+                // Adicionar transações ao backup
+                if (transactionsSnap.exists()) {
+                    userDataFiltered.transactions = transactionsSnap.val();
+                    logger.log(`📊 ${Object.keys(userDataFiltered.transactions).length} transações capturadas`);
+                } else {
+                    userDataFiltered.transactions = {};
+                    logger.log('📊 Nenhuma transação encontrada');
+                }
 
                 // Contar itens para metadata
                 const itemCount = {
@@ -4859,25 +5525,55 @@
 
                 // 3. LIMPEZA COMPLETA - Deletar TODOS os nós de dados do usuário
                 logger.log('🗑️ Limpando TODOS os dados atuais...');
+                
+                // 3.1. Limpar transações da raiz global (filtradas por userId)
+                logger.log('🗑️ Limpando transações da raiz global...');
+                const transactionsRef = ref(database, 'transactions');
+                const transactionsQuery = query(
+                    transactionsRef,
+                    orderByChild('userId'),
+                    equalTo(userId)
+                );
+                const currentTransactionsSnap = await get(transactionsQuery);
+                
+                if (currentTransactionsSnap.exists()) {
+                    const transactionUpdates = {};
+                    Object.keys(currentTransactionsSnap.val()).forEach(txnId => {
+                        transactionUpdates[`/transactions/${txnId}`] = null;
+                    });
+                    await update(ref(database), transactionUpdates);
+                    logger.log(`✅ ${Object.keys(transactionUpdates).length} transações removidas da raiz`);
+                }
+                
+                // 3.2. Limpar nós principais do usuário (exceto backups)
                 const clearUpdates = {};
-
-                // Limpar nós principais do usuário (exceto backups)
                 clearUpdates[`/users/${userId}/cards`] = null;
-                clearUpdates[`/users/${userId}/transactions`] = null;
                 clearUpdates[`/users/${userId}/budgets`] = null;
                 clearUpdates[`/users/${userId}/invoices`] = null;
                 clearUpdates[`/users/${userId}/categories`] = null;
                 clearUpdates[`/users/${userId}/settings`] = null;
 
                 await update(ref(database), clearUpdates);
-                logger.log('✅ Limpeza concluída');
+                logger.log('✅ Limpeza de nós do usuário concluída');
 
-                // 4. RESTAURAÇÃO - Escrever dados do backup na raiz do usuário
+                // 4. RESTAURAÇÃO - Escrever dados do backup
                 logger.log('♻️ Restaurando dados do backup...');
-                const userRootRef = ref(database, `users/${userId}`);
                 
-                // Usar update para escrever todos os dados de uma vez
-                await update(userRootRef, restoredData);
+                // 4.1. Separar transações para restaurar na raiz global
+                const { transactions: backupTransactions, ...userDataOnly } = restoredData;
+                
+                // 4.2. Restaurar dados do usuário (sem transações)
+                const userRootRef = ref(database, `users/${userId}`);
+                await update(userRootRef, userDataOnly);
+                logger.log('✅ Dados do usuário restaurados');
+                
+                // 4.3. Restaurar transações na raiz global
+                if (backupTransactions && Object.keys(backupTransactions).length > 0) {
+                    logger.log(`📊 Restaurando ${Object.keys(backupTransactions).length} transações na raiz global...`);
+                    const transactionsRootRef = ref(database, 'transactions');
+                    await update(transactionsRootRef, backupTransactions);
+                    logger.log('✅ Transações restauradas na raiz');
+                }
 
                 logger.log('✅ Backup restaurado com sucesso');
                 logger.log('🔄 Recarregando página para limpar cache...');
@@ -5029,6 +5725,7 @@
         window.openCardExpense = openCardExpense;
         window.restoreBackup = restoreBackup;
         window.deleteBackup = deleteBackup;
+        window.cleanupDuplicates = cleanupDuplicates;
 
         // ============================================
         // EVENT LISTENERS
@@ -5146,6 +5843,12 @@
             ui.elements.modalSettings.classList.remove('hidden');
             ui.elements.userMenuDropdown.classList.add('hidden');
             
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = ui.elements.modalSettings.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
+            
             // Load current user data
             if (auth.currentUser) {
                 ui.elements.settingsEmail.value = auth.currentUser.email || '';
@@ -5155,9 +5858,26 @@
             // Render backup list
             renderBackupList();
         });
+        
+        function hideSettingsModal() {
+            const container = ui.elements.modalSettings.querySelector('.modal-container');
+            
+            // Animate out before hiding
+            if (container) {
+                container.classList.remove('active');
+                setTimeout(() => {
+                    ui.elements.modalSettings.classList.add('hidden');
+                }, 300);
+            } else {
+                ui.elements.modalSettings.classList.add('hidden');
+            }
+        }
+        
+        // Add to ui object
+        ui.hideSettingsModal = hideSettingsModal;
 
         ui.elements.btnCloseSettings.addEventListener('click', () => {
-            ui.elements.modalSettings.classList.add('hidden');
+            ui.hideSettingsModal();
         });
 
         ui.elements.btnToggleTheme.addEventListener('click', () => {
@@ -5222,7 +5942,7 @@
         // Close settings modal when clicking outside
         ui.elements.modalSettings.addEventListener('click', (e) => {
             if (e.target === ui.elements.modalSettings) {
-                ui.elements.modalSettings.classList.add('hidden');
+                ui.hideSettingsModal();
             }
         });
 
@@ -5285,11 +6005,11 @@
 
         // Budget modal controls (kept for potential future use)
         ui.elements.btnCloseBudgetModal.addEventListener('click', () => {
-            ui.elements.modalBudget.classList.add('hidden');
+            ui.hideBudgetModal();
         });
 
         ui.elements.btnCancelBudget.addEventListener('click', () => {
-            ui.elements.modalBudget.classList.add('hidden');
+            ui.hideBudgetModal();
         });
 
         ui.elements.btnSaveBudgets.addEventListener('click', () => {
@@ -5299,7 +6019,7 @@
         // Close budget modal on background click
         ui.elements.modalBudget.addEventListener('click', (e) => {
             if (e.target === ui.elements.modalBudget) {
-                ui.elements.modalBudget.classList.add('hidden');
+                ui.hideBudgetModal();
             }
         });
 
@@ -5335,13 +6055,92 @@
             }
         });
 
-        // Export & Print controls
+        // FASE 23: Import & Export controls
+        ui.elements.btnImportCSV.addEventListener('click', () => {
+            openImportModal();
+        });
+
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             exportToCSV();
         });
 
         document.getElementById('btn-print-report').addEventListener('click', () => {
             printReport();
+        });
+
+        // FASE 23: Import modal controls
+        function hideImportModal() {
+            const container = ui.elements.modalImportCSV.querySelector('.modal-container');
+            
+            // Animate out before hiding
+            if (container) {
+                container.classList.remove('active');
+                setTimeout(() => {
+                    ui.elements.modalImportCSV.classList.add('hidden');
+                }, 300);
+            } else {
+                ui.elements.modalImportCSV.classList.add('hidden');
+            }
+        }
+        
+        // Add to ui object
+        ui.hideImportModal = hideImportModal;
+        
+        ui.elements.btnCloseImportModal.addEventListener('click', () => {
+            ui.hideImportModal();
+        });
+
+        ui.elements.btnCancelImport.addEventListener('click', () => {
+            ui.hideImportModal();
+        });
+
+        ui.elements.btnProcessImport.addEventListener('click', () => {
+            processImport();
+        });
+
+        ui.elements.importMode.addEventListener('change', () => {
+            updateImportInstructions();
+            // Revalidar botão ao mudar modo
+            validateImportButton();
+        });
+
+        ui.elements.csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) previewCSV(file);
+        });
+
+        // FASE 23: Validar botão ao selecionar cartão (obrigatório para Nubank)
+        ui.elements.importTargetCard.addEventListener('change', () => {
+            validateImportButton();
+        });
+
+        /**
+         * Validate import button state based on mode and card selection
+         */
+        function validateImportButton() {
+            if (!window.pendingImport || window.pendingImport.length === 0) {
+                ui.elements.btnProcessImport.disabled = true;
+                return;
+            }
+            
+            const mode = ui.elements.importMode.value;
+            const hasCard = ui.elements.importTargetCard.value;
+            
+            // Nubank requer cartão obrigatoriamente
+            if (mode === 'nubank' && !hasCard) {
+                ui.elements.btnProcessImport.disabled = true;
+                ui.elements.btnProcessImport.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Selecione um cartão';
+            } else {
+                ui.elements.btnProcessImport.disabled = false;
+                ui.elements.btnProcessImport.innerHTML = '<i class="fas fa-check mr-2"></i>Importar';
+            }
+        }
+
+        // Close import modal on background click
+        ui.elements.modalImportCSV.addEventListener('click', (e) => {
+            if (e.target === ui.elements.modalImportCSV) {
+                ui.hideImportModal();
+            }
         });
 
         // Month navigation controls
@@ -5564,8 +6363,32 @@
             });
             
             ui.elements.modalBudget.classList.remove('hidden');
+            
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = ui.elements.modalBudget.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
+            
             searchInput.focus();
         }
+        
+        function hideBudgetModal() {
+            const container = ui.elements.modalBudget.querySelector('.modal-container');
+            
+            // Animate out before hiding
+            if (container) {
+                container.classList.remove('active');
+                setTimeout(() => {
+                    ui.elements.modalBudget.classList.add('hidden');
+                }, 300);
+            } else {
+                ui.elements.modalBudget.classList.add('hidden');
+            }
+        }
+        
+        // Add to ui object
+        ui.hideBudgetModal = hideBudgetModal;
 
         async function saveBudgets() {
             if (!state.user) return;
@@ -5604,7 +6427,7 @@
                 // Re-render category list with progress bars
                 ui.renderCategoryList();
                 
-                ui.elements.modalBudget.classList.add('hidden');
+                ui.hideBudgetModal();
                 ui.setLoading(false);
                 
             } catch (error) {
@@ -5686,6 +6509,776 @@
             document.body.removeChild(link);
             
             logger.log('📥 CSV exportado com sucesso:', state.transactions.length, 'transações');
+        }
+
+        // ============================================
+        // FASE 23: CSV IMPORT FUNCTIONS (NUBANK SUPPORT)
+        // ============================================
+
+        /**
+         * Open import CSV modal
+         */
+        function openImportModal() {
+            // Verificar se há cartões cadastrados para modo Nubank
+            const hasCards = state.cards && state.cards.length > 0;
+            
+            if (!hasCards) {
+                const goToCards = confirm(
+                    '⚠️ Nenhum cartão cadastrado!\n\n' +
+                    'Para importar faturas do Nubank, você precisa cadastrar pelo menos um cartão de crédito.\n\n' +
+                    'Deseja ir para a tela de cartões agora?'
+                );
+                
+                if (goToCards) {
+                    ui.showView('cards');
+                }
+                return;
+            }
+            
+            ui.elements.modalImportCSV.classList.remove('hidden');
+            
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = ui.elements.modalImportCSV.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
+            
+            // Populate card selection dropdown
+            const cardSelect = ui.elements.importTargetCard;
+            cardSelect.innerHTML = '<option value="">Selecione um cartão...</option>';
+            
+            state.cards.forEach(card => {
+                const option = document.createElement('option');
+                option.value = card.id;
+                option.textContent = `${card.name} (${card.brand})`;
+                cardSelect.appendChild(option);
+            });
+            
+            // Reset form
+            ui.elements.csvFileInput.value = '';
+            ui.elements.importMode.value = 'nubank'; // Padrão Nubank
+            ui.elements.importPreview.classList.add('hidden');
+            ui.elements.btnProcessImport.disabled = true;
+            
+            // Show Nubank instructions by default
+            updateImportInstructions();
+        }
+
+        /**
+         * Update import instructions based on mode
+         */
+        function updateImportInstructions() {
+            const mode = ui.elements.importMode?.value || 'nubank';
+            const isNubank = mode === 'nubank';
+            const isSystem = mode === 'system';
+            
+            // Safe toggle with null checks
+            if (ui.elements.nubankInstructions) {
+                ui.elements.nubankInstructions.classList.toggle('hidden', !isNubank);
+            }
+            
+            if (ui.elements.manualInstructions) {
+                ui.elements.manualInstructions.classList.toggle('hidden', !isSystem && !mode.startsWith('manual'));
+            }
+            
+            if (ui.elements.importCardSelection) {
+                ui.elements.importCardSelection.classList.toggle('hidden', !isNubank);
+            }
+            
+            // Update manual instructions text based on mode
+            if (isSystem && ui.elements.manualInstructions) {
+                const h3 = ui.elements.manualInstructions.querySelector('h3');
+                const p = ui.elements.manualInstructions.querySelector('p');
+                
+                if (h3) h3.innerHTML = '<i class="fas fa-info-circle"></i> Formato do Sistema';
+                if (p) p.textContent = 'Use o arquivo CSV exportado pelo próprio sistema (botão "CSV" acima).';
+            }
+        }
+
+        /**
+         * Parse CSV file and show preview
+         */
+        async function previewCSV(file) {
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const mode = ui.elements.importMode.value;
+                
+                let preview = '';
+                let transactions = [];
+                
+                if (mode === 'system') {
+                    transactions = parseSystemCSV(text);
+                    preview = `
+                        <p class="text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            ${transactions.length} transações detectadas
+                        </p>
+                        <div class="space-y-2">
+                            ${transactions.slice(0, 5).map(t => `
+                                <div class="flex justify-between items-center text-xs p-2 bg-white rounded border border-slate-200">
+                                    <span class="font-medium">${t.description}</span>
+                                    <span class="${t.type === 'receita' ? 'text-emerald-600' : 'text-rose-600'} font-bold">${formatCurrency(t.value)}</span>
+                                </div>
+                            `).join('')}
+                            ${transactions.length > 5 ? `<p class="text-xs text-slate-400 text-center pt-2">+ ${transactions.length - 5} transações...</p>` : ''}
+                        </div>
+                    `;
+                } else if (mode === 'nubank') {
+                    transactions = parseNubankCSV(text);
+                    
+                    // Count installments
+                    const installmentCount = transactions.filter(t => t.installment).length;
+                    const groupsCount = new Set(transactions.filter(t => t.groupId).map(t => t.groupId)).size;
+                    
+                    preview = `
+                        <p class="text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            ${transactions.length} transações detectadas
+                            ${installmentCount > 0 ? `<span class="ml-2 text-purple-600">(${groupsCount} parceladas)</span>` : ''}
+                        </p>
+                        <div class="space-y-2">
+                            ${transactions.slice(0, 5).map(t => `
+                                <div class="flex justify-between items-center text-xs p-2 bg-white rounded border ${t.installment ? 'border-purple-300 bg-purple-50' : 'border-slate-200'}">
+                                    <div class="flex-1">
+                                        <span class="font-medium">${t.description}</span>
+                                        ${t.installment ? `<span class="ml-2 text-purple-600 font-bold">${t.installment.current}/${t.installment.total}</span>` : ''}
+                                        ${t.status === 'pendente' ? `<span class="ml-2 text-amber-500 text-[10px]">FUTURA</span>` : ''}
+                                    </div>
+                                    <span class="text-rose-600 font-bold ml-2">${formatCurrency(t.value)}</span>
+                                </div>
+                            `).join('')}
+                            ${transactions.length > 5 ? `<p class="text-xs text-slate-400 text-center pt-2">+ ${transactions.length - 5} transações...</p>` : ''}
+                        </div>
+                        ${installmentCount > 0 ? `
+                            <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                                <p class="text-xs text-purple-800">
+                                    <i class="fas fa-magic mr-1"></i>
+                                    <strong>Parcelamento inteligente ativado!</strong><br>
+                                    Parcelas futuras serão criadas automaticamente nos próximos meses.
+                                </p>
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    transactions = parseManualCSV(text);
+                    preview = `
+                        <p class="text-sm font-semibold text-slate-700 mb-3">
+                            <i class="fas fa-check-circle text-emerald-500 mr-2"></i>
+                            ${transactions.length} transações detectadas
+                        </p>
+                        <div class="text-xs text-slate-600">
+                            <pre class="bg-white p-3 rounded border border-slate-200 overflow-x-auto">${text.split('\n').slice(0, 6).join('\n')}</pre>
+                        </div>
+                    `;
+                }
+                
+                ui.elements.importPreviewContent.innerHTML = preview;
+                ui.elements.importPreview.classList.remove('hidden');
+                
+                // Store for processing
+                window.pendingImport = transactions;
+                
+                // Validate button state
+                validateImportButton();
+                
+            } catch (error) {
+                logger.error('❌ Erro ao ler CSV:', error);
+                alert('Erro ao ler arquivo CSV. Verifique o formato.');
+            }
+        }
+
+        /**
+         * FASE 23: Parse System Export CSV (Brazilian format)
+         * Format: Data;Descrição;Categoria;Tipo;Valor;Status
+         * Example: 05/12/2025;"Salário";"salary";Receita;5000,00;Confirmada
+         */
+        function parseSystemCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const transactions = [];
+            
+            // Skip header (first line)
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Split by semicolon (Brazilian CSV format)
+                const columns = line.split(';').map(col => col.replace(/^"|"$/g, '').trim());
+                
+                if (columns.length < 5) {
+                    logger.warn('⚠️ Linha inválida (menos de 5 colunas):', line);
+                    continue;
+                }
+                
+                const dateStr = columns[0]; // DD/MM/YYYY
+                const description = columns[1];
+                const category = columns[2];
+                const typeStr = columns[3]; // Receita ou Despesa
+                const valueStr = columns[4]; // 5000,00
+                const statusStr = columns[5] || 'Confirmada'; // Confirmada ou Pendente
+                
+                // Parse Brazilian date format: DD/MM/YYYY
+                const dateParts = dateStr.split('/');
+                if (dateParts.length !== 3) {
+                    logger.warn('⚠️ Data inválida:', dateStr);
+                    continue;
+                }
+                
+                const day = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+                const year = parseInt(dateParts[2]);
+                const date = new Date(year, month, day, 12, 0, 0);
+                
+                if (isNaN(date.getTime())) {
+                    logger.warn('⚠️ Data inválida após parse:', dateStr);
+                    continue;
+                }
+                
+                // Parse Brazilian number format: 5000,00 → 5000.00
+                const value = parseFloat(valueStr.replace(',', '.'));
+                if (isNaN(value)) {
+                    logger.warn('⚠️ Valor inválido:', valueStr);
+                    continue;
+                }
+                
+                // Normalize type
+                const type = typeStr.toLowerCase().includes('receita') ? 'receita' : 'despesa';
+                
+                // Normalize status
+                const status = statusStr.toLowerCase().includes('confirmada') ? 'confirmada' : 'pendente';
+                
+                transactions.push({
+                    date: date.getTime(),
+                    description: description || 'Transação',
+                    value: Math.abs(value),
+                    type: type,
+                    status: status,
+                    category: category || 'Outros'
+                });
+            }
+            
+            logger.log(`💾 System CSV parsed: ${transactions.length} transações válidas`);
+            return transactions;
+        }
+
+        /**
+         * FASE 23+: Parse Nubank CSV format with INTELLIGENT INSTALLMENT DETECTION
+         * Expected columns: date, title, amount
+         * Example: 2025-01-05,Supermercado ABC - Parcela 1/3,150.50
+         * 
+         * Detects installment patterns:
+         * - "Parcela 1/10"
+         * - "1/10"
+         * - "- 1/10"
+         * And creates future installments automatically!
+         */
+        function parseNubankCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const transactions = [];
+            
+            // Detect header row (contains "date" or "data")
+            let startIndex = 0;
+            const firstLine = lines[0].toLowerCase();
+            if (firstLine.includes('date') || firstLine.includes('data') || firstLine.includes('time')) {
+                startIndex = 1; // Skip header
+            }
+            
+            // Regex patterns for installment detection (mais abrangentes)
+            const installmentPatterns = [
+                /[- ]Parcela (\d+)\/(\d+)/i,   // "- Parcela 1/10"
+                /[- ](\d+)\/(\d+)$/,            // "- 1/10" no final
+                /\s(\d+)\/(\d+)$/,              // " 1/10" no final
+                /\((\d+)\/(\d+)\)$/,            // "(1/10)" no final (SEU CASO!)
+                /\s*\((\d+)\/(\d+)\)\s*$/,     // " (1/10) " com espaços
+                /-\s*(\d+)\/(\d+)\s*$/          // "- 1/10 " com espaços
+            ];
+            
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Parse CSV (handle quoted fields)
+                const columns = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
+                if (!columns || columns.length < 3) continue;
+                
+                // Clean quoted values
+                const cleanCol = (col) => col ? col.replace(/^"|"$/g, '').trim() : '';
+                
+                const dateStr = cleanCol(columns[0]);
+                let description = cleanCol(columns[1]);
+                const amountStr = cleanCol(columns[2]);
+                
+                // Parse date (YYYY-MM-DD format from Nubank)
+                // Use T12:00:00 to avoid timezone issues
+                const date = new Date(dateStr + 'T12:00:00');
+                if (isNaN(date.getTime())) {
+                    logger.warn('⚠️ Data inválida:', dateStr);
+                    continue;
+                }
+                
+                // Parse amount (can be negative for payments)
+                const amount = parseFloat(amountStr.replace(',', '.'));
+                if (isNaN(amount)) {
+                    logger.warn('⚠️ Valor inválido:', amountStr);
+                    continue;
+                }
+                
+                // Nubank uses POSITIVE values for purchases (expenses)
+                // NEGATIVE values are payments (we'll skip these to avoid duplicates)
+                if (amount < 0) {
+                    logger.log('🔄 Ignorando pagamento de fatura:', description, amount);
+                    continue; // Skip invoice payments
+                }
+                
+                // 🎯 INTELLIGENT INSTALLMENT DETECTION
+                let installmentInfo = null;
+                let cleanDescription = description;
+                
+                for (const pattern of installmentPatterns) {
+                    const match = description.match(pattern);
+                    if (match) {
+                        const current = parseInt(match[1]);
+                        const total = parseInt(match[2]);
+                        
+                        // Validate installment numbers
+                        if (current > 0 && total > 0 && current <= total) {
+                            installmentInfo = { current, total };
+                            
+                            // 🧹 LIMPEZA AGRESSIVA: Remove TUDO relacionado a parcelas
+                            cleanDescription = description
+                                .replace(pattern, '')                    // Remove padrão detectado
+                                .replace(/\s*\(\d+\/\d+\)\s*/g, '')      // Remove "(X/Y)" em qualquer lugar
+                                .replace(/[- ]Parcela \d+\/\d+/gi, '')   // Remove "- Parcela X/Y"
+                                .replace(/[- ]\d+\/\d+/g, '')            // Remove "- X/Y"
+                                .replace(/[-\s]+$/, '')                  // Remove traços/espaços finais
+                                .replace(/^\s*[-]\s*/, '')               // Remove traço inicial
+                                .trim();
+                            
+                            logger.log(`💳 Parcelamento detectado: "${cleanDescription}" (${current}/${total})`);
+                            break;
+                        }
+                    }
+                }
+                
+                // 🔄 DETECÇÃO DE ASSINATURAS RECORRENTES
+                // Padrões comuns de assinaturas (sem parcelas)
+                const subscriptionPatterns = [
+                    /spotify/i,
+                    /netflix/i,
+                    /prime video/i,
+                    /amazon prime/i,
+                    /apple\.com/i,
+                    /google\s*(one|storage|cloud)/i,
+                    /microsoft\s*(365|office)/i,
+                    /adobe/i,
+                    /dropbox/i,
+                    /icloud/i,
+                    /youtube\s*premium/i,
+                    /disney\s*plus/i,
+                    /hbo\s*max/i,
+                    /paramount/i,
+                    /deezer/i,
+                    /globoplay/i,
+                    /ifood\s*club/i,
+                    /rappi\s*prime/i,
+                    /uber\s*one/i,
+                    /linkedin\s*premium/i,
+                    /github/i,
+                    /chatgpt/i,
+                    /openai/i,
+                    /ebn\s*\*/i,  // EBN é um agregador de pagamentos de assinaturas
+                    /\*bill/i,    // Padrão comum de cobranças recorrentes
+                ];
+                
+                const isSubscription = !installmentInfo && subscriptionPatterns.some(pattern => 
+                    pattern.test(cleanDescription)
+                );
+                
+                // Create base transaction
+                const baseTxn = {
+                    date: date.getTime(),
+                    description: cleanDescription || 'Compra',
+                    value: Math.abs(amount),
+                    type: 'despesa',
+                    status: 'confirmada',
+                    category: 'Outros',
+                    isSubscription: isSubscription  // 🔄 Marcador de assinatura
+                };
+                
+                if (isSubscription) {
+                    logger.log(`🔄 Assinatura detectada: ${cleanDescription}`);
+                }
+                
+                // If installment detected, create series
+                if (installmentInfo) {
+                    const groupId = `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // 🎯 TODAS AS PARCELAS (incluindo a primeira) terão data calculada
+                    // baseada no fechamento da fatura de competência
+                    
+                    // Add current installment (com installmentOffset: 0)
+                    transactions.push({
+                        ...baseTxn,
+                        groupId: groupId,
+                        installment: {
+                            current: installmentInfo.current,
+                            total: installmentInfo.total
+                        },
+                        installmentOffset: 0  // Primeira parcela também precisa calcular!
+                    });
+                    
+                    // Create FUTURE installments (remaining ones)
+                    const remainingInstallments = installmentInfo.total - installmentInfo.current;
+                    
+                    for (let j = 1; j <= remainingInstallments; j++) {
+                        // 📅 CORREÇÃO: Mantém a MESMA data de compra para todas as parcelas
+                        // Cada parcela cairá na fatura correspondente (mês seguinte)
+                        // Exemplo: Compra 25/11 em 3 parcelas:
+                        //   Parcela 1: 25/11 → Fatura Dezembro
+                        //   Parcela 2: 25/11 → Fatura Janeiro  
+                        //   Parcela 3: 25/11 → Fatura Fevereiro
+                        
+                        transactions.push({
+                            ...baseTxn,
+                            date: date.getTime(), // MESMA data original!
+                            groupId: groupId,
+                            status: 'pendente', // Future installments start as pending
+                            installment: {
+                                current: installmentInfo.current + j,
+                                total: installmentInfo.total
+                            },
+                            // Marcador para o sistema saber qual fatura ela pertence
+                            installmentOffset: j // Offset de meses para calcular fatura
+                        });
+                    }
+                    
+                    logger.log(`📅 Criadas ${remainingInstallments} parcelas futuras para: ${cleanDescription} (mesma data de compra)`);
+                    
+                } else {
+                    // Not installment, add as single transaction
+                    transactions.push(baseTxn);
+                }
+            }
+            
+            logger.log(`🟣 Nubank CSV parsed: ${transactions.length} transações (incluindo parcelas futuras)`);
+            return transactions;
+        }
+
+        /**
+         * Parse manual/standard CSV format
+         * Expected: data,descricao,valor,tipo
+         */
+        function parseManualCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const transactions = [];
+            
+            // Skip header
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const columns = line.split(',');
+                if (columns.length < 3) continue;
+                
+                const dateStr = columns[0].trim();
+                const description = columns[1].trim();
+                const valueStr = columns[2].trim();
+                const type = (columns[3] || 'despesa').trim().toLowerCase();
+                
+                // Parse date (try multiple formats)
+                let date;
+                if (dateStr.includes('-')) {
+                    // YYYY-MM-DD
+                    date = new Date(dateStr + 'T12:00:00');
+                } else {
+                    // DD/MM/YYYY
+                    const parts = dateStr.split('/');
+                    date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
+                }
+                
+                if (isNaN(date.getTime())) continue;
+                
+                const value = parseFloat(valueStr.replace(',', '.'));
+                if (isNaN(value)) continue;
+                
+                transactions.push({
+                    date: date.getTime(),
+                    description: description || 'Transação',
+                    value: Math.abs(value),
+                    type: type === 'receita' ? 'receita' : 'despesa',
+                    status: 'confirmada',
+                    category: 'Outros'
+                });
+            }
+            
+            logger.log(`⚙️ Manual CSV parsed: ${transactions.length} transações`);
+            return transactions;
+        }
+
+        /**
+         * Process and import transactions
+         */
+        async function processImport() {
+            if (!window.pendingImport || window.pendingImport.length === 0) {
+                alert('Nenhuma transação para importar.');
+                return;
+            }
+            
+            const mode = ui.elements.importMode.value;
+            const targetCardId = ui.elements.importTargetCard.value;
+            const transactions = window.pendingImport;
+            
+            // VALIDAÇÃO OBRIGATÓRIA: Nubank DEVE ter cartão selecionado
+            if (mode === 'nubank' && !targetCardId) {
+                alert(
+                    '⚠️ Cartão obrigatório!\n\n' +
+                    'Para importar faturas do Nubank, você DEVE selecionar um cartão de crédito.\n\n' +
+                    'As transações serão vinculadas ao cartão selecionado.'
+                );
+                return;
+            }
+            
+            // 🔍 VERIFICAÇÃO DE DUPLICATAS
+            const card = targetCardId ? state.cards.find(c => c.id === targetCardId) : null;
+            const duplicates = [];
+            const newTransactions = [];
+            
+            for (const txn of transactions) {
+                // Criar identificador único para comparação
+                const txnDate = new Date(txn.date);
+                const txnDay = txnDate.getDate();
+                const txnMonth = txnDate.getMonth();
+                const txnYear = txnDate.getFullYear();
+                
+                // 🎯 DETECÇÃO INTELIGENTE DE DUPLICATAS
+                let isDuplicate = false;
+                
+                // Verificar se já existe transação com:
+                // 1. Mesma descrição
+                // 2. Mesmo valor
+                // 3. Mesmo cartão
+                // 4. Se parcelada: mesmo número de parcela (current/total)
+                const existingTransaction = state.transactions.find(t => {
+                    // Filtro básico: cartão, descrição e valor
+                    if (t.cardId !== targetCardId) return false;
+                    if (t.description !== txn.description) return false;
+                    if (Math.abs(t.value - txn.value) > 0.01) return false;
+                    
+                    // Para transações parceladas: verificar número da parcela
+                    if (txn.installment && t.installment) {
+                        // Mesma parcela (ex: 3/5) = DUPLICATA
+                        if (t.installment.current === txn.installment.current &&
+                            t.installment.total === txn.installment.total) {
+                            return true;
+                        }
+                        // Parcelas diferentes da mesma compra = NÃO é duplicata
+                        return false;
+                    }
+                    
+                    // Para transações não parceladas: verificar data de compra
+                    if (!txn.installment && !t.installment) {
+                        const tPurchaseDate = new Date(t.purchaseDate || t.date);
+                        const tDay = tPurchaseDate.getDate();
+                        const tMonth = tPurchaseDate.getMonth();
+                        const tYear = tPurchaseDate.getFullYear();
+                        
+                        // Mesma data de compra = DUPLICATA
+                        return (tDay === txnDay && tMonth === txnMonth && tYear === txnYear);
+                    }
+                    
+                    return false;
+                });
+                
+                if (existingTransaction) {
+                    duplicates.push(txn);
+                } else {
+                    newTransactions.push(txn);
+                }
+            }
+            
+            // Mostrar relatório de duplicatas
+            let confirmMessage = '';
+            if (newTransactions.length === 0) {
+                alert('⚠️ Nenhuma transação nova encontrada!\n\nTodas as transações do arquivo já existem no sistema.');
+                return;
+            }
+            
+            // 📊 VALIDAÇÃO: Calcular valor total que será importado
+            const totalToImport = newTransactions.reduce((sum, t) => {
+                return t.type === 'receita' ? sum - t.value : sum + t.value;
+            }, 0);
+            
+            // 📊 Calcular valor atual das transações existentes do mesmo mês
+            let currentMonthTotal = 0;
+            if (targetCardId && card) {
+                // Identificar o mês da primeira transação a importar
+                const firstTxnDate = new Date(newTransactions[0].date);
+                const targetMonth = firstTxnDate.getMonth();
+                const targetYear = firstTxnDate.getFullYear();
+                
+                currentMonthTotal = state.transactions
+                    .filter(t => {
+                        if (t.cardId !== targetCardId) return false;
+                        const txnDate = new Date(t.date);
+                        return txnDate.getMonth() === targetMonth && txnDate.getFullYear() === targetYear;
+                    })
+                    .reduce((sum, t) => {
+                        return t.type === 'receita' ? sum - t.value : sum + t.value;
+                    }, 0);
+            }
+            
+            const projectedTotal = currentMonthTotal + totalToImport;
+            
+            if (duplicates.length > 0) {
+                confirmMessage = `⚠️ DUPLICATAS DETECTADAS\n\n`;
+                confirmMessage += `${duplicates.length} transação(ões) duplicada(s) serão IGNORADAS\n`;
+                confirmMessage += `${newTransactions.length} transação(ões) nova(s) serão IMPORTADAS\n\n`;
+                confirmMessage += `📊 VALORES:\n`;
+                confirmMessage += `• Total a importar: ${formatCurrency(totalToImport)}\n`;
+                confirmMessage += `• Total atual da fatura: ${formatCurrency(currentMonthTotal)}\n`;
+                confirmMessage += `• Total projetado: ${formatCurrency(projectedTotal)}\n\n`;
+                confirmMessage += `Exemplos de duplicatas ignoradas:\n`;
+                duplicates.slice(0, 3).forEach(d => {
+                    const parcela = d.installment ? ` (${d.installment.current}/${d.installment.total})` : '';
+                    confirmMessage += `• ${d.description}${parcela} - ${formatCurrency(d.value)}\n`;
+                });
+                if (duplicates.length > 3) {
+                    confirmMessage += `... e mais ${duplicates.length - 3}\n`;
+                }
+                confirmMessage += `\nDeseja continuar?`;
+            } else {
+                confirmMessage = `Importar ${newTransactions.length} transações?\n\n` +
+                    (targetCardId ? `✓ Serão vinculadas ao cartão: ${card?.name}\n` : '') +
+                    `✓ Status: Pendente\n` +
+                    `✓ Categoria: ${card?.name || 'Outros'}\n\n` +
+                    `📊 VALORES:\n` +
+                    `• Total a importar: ${formatCurrency(totalToImport)}\n` +
+                    `• Total atual: ${formatCurrency(currentMonthTotal)}\n` +
+                    `• Total projetado: ${formatCurrency(projectedTotal)}`;
+            }
+            
+            const confirmed = confirm(confirmMessage);
+            
+            if (!confirmed) return;
+            
+            ui.elements.btnProcessImport.disabled = true;
+            ui.elements.btnProcessImport.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importando...';
+            
+            try {
+                let successCount = 0;
+                const transactionsRef = ref(database, 'transactions');
+                
+                // 🎯 IMPORTAÇÃO DIRETA: Salva no Firebase sem passar por saveTransaction
+                // Isso preserva 100% dos dados de parcelamento do parser
+                // ✅ APENAS transações NOVAS (sem duplicatas)
+                for (const txn of newTransactions) {
+                    // 📅 CÁLCULO DA DATA DA FATURA CORRETA
+                    let finalDate = txn.date;
+                    
+                    // Se tem cartão selecionado, calcular data de fechamento da fatura
+                    if (targetCardId) {
+                        const card = state.cards.find(c => c.id === targetCardId);
+                        if (card) {
+                            const purchaseDate = new Date(txn.date);
+                            const purchaseDay = purchaseDate.getDate();
+                            
+                            // Determina mês base da fatura
+                            let invoiceMonth = purchaseDate.getMonth();
+                            let invoiceYear = purchaseDate.getFullYear();
+                            
+                            // Se compra >= fechamento, vai para próximo mês
+                            if (purchaseDay >= card.closingDay) {
+                                invoiceMonth += 1;
+                                if (invoiceMonth > 11) {
+                                    invoiceMonth = 0;
+                                    invoiceYear += 1;
+                                }
+                            }
+                            
+                            // Se é parcela futura, adiciona o offset de meses
+                            if (txn.installmentOffset) {
+                                invoiceMonth += txn.installmentOffset;
+                                while (invoiceMonth > 11) {
+                                    invoiceMonth -= 12;
+                                    invoiceYear += 1;
+                                }
+                            }
+                            
+                            // 📅 DATA DA TRANSAÇÃO = DIA DO FECHAMENTO DA FATURA
+                            // TODAS as transações (parceladas ou não) ficam na data de fechamento
+                            const closingDate = new Date(invoiceYear, invoiceMonth, card.closingDay);
+                            finalDate = closingDate.getTime();
+                            
+                            const parcela = txn.installment ? ` (${txn.installment.current}/${txn.installment.total})` : '';
+                            logger.log(`📆 ${txn.description}${parcela}: Fecha ${new Date(finalDate).toLocaleDateString('pt-BR')}`);
+                        }
+                    }
+                    
+                    // 🎯 NOME DO CARTÃO como categoria (ao invés de "Outros")
+                    const card = targetCardId ? state.cards.find(c => c.id === targetCardId) : null;
+                    const categoryName = card ? card.name : txn.category;
+                    
+                    const transactionData = {
+                        userId: auth.currentUser.uid,
+                        description: txn.description,  // JÁ LIMPO pelo parser!
+                        value: Number(txn.value),
+                        type: txn.type,
+                        category: categoryName,  // Nome do cartão ou categoria original
+                        date: finalDate,  // Data calculada corretamente!
+                        status: 'pendente',  // ❗ SEMPRE PENDENTE na importação
+                        createdAt: Date.now()
+                    };
+                    
+                    // If target card is selected, add credit card data
+                    if (targetCardId) {
+                        transactionData.paymentMethod = 'credit';
+                        transactionData.cardId = targetCardId;
+                        transactionData.purchaseDate = txn.date;  // Data original da compra
+                    } else {
+                        transactionData.paymentMethod = 'cash';
+                    }
+                    
+                    // 🎯 PRESERVAR PARCELAMENTO: Copia exatamente como veio do parser
+                    if (txn.groupId) {
+                        transactionData.groupId = txn.groupId;
+                    }
+                    
+                    if (txn.installment) {
+                        transactionData.installment = {
+                            current: txn.installment.current,
+                            total: txn.installment.total
+                        };
+                    }
+                    
+                    // Salva DIRETAMENTE no Firebase (bypass saveTransaction)
+                    await push(transactionsRef, transactionData);
+                    successCount++;
+                    
+                    logger.log(`✅ Importado: ${txn.description} ${txn.installment ? `(${txn.installment.current}/${txn.installment.total})` : ''}`);
+                }
+                
+                logger.log(`✅ Importação concluída: ${successCount}/${newTransactions.length} novas transações`);
+                
+                let resultMessage = `✅ Importação concluída!\n\n`;
+                resultMessage += `${successCount} transações adicionadas com sucesso.\n`;
+                if (duplicates.length > 0) {
+                    resultMessage += `\n⚠️ ${duplicates.length} duplicatas foram ignoradas.`;
+                }
+                
+                alert(resultMessage);
+                
+                // Close modal
+                ui.hideImportModal();
+                window.pendingImport = null;
+                
+            } catch (error) {
+                logger.error('❌ Erro na importação:', error);
+                alert('Erro ao importar transações. Tente novamente.');
+            } finally {
+                ui.elements.btnProcessImport.disabled = false;
+                ui.elements.btnProcessImport.innerHTML = '<i class="fas fa-check mr-2"></i>Importar';
+            }
         }
 
         function printReport() {
@@ -6139,17 +7732,38 @@
                         const installmentText = t.installment ? 
                             `${t.installment.current}/${t.installment.total}x` : '';
                         
+                        // 💚 VISUAL: Receitas têm fundo verde (estorno/crédito)
+                        const isCredit = t.type === 'receita';
+                        const bgColor = isCredit ? 'bg-emerald-50' : 'bg-slate-50';
+                        const hoverBg = isCredit ? 'hover:bg-emerald-100' : 'hover:bg-slate-100';
+                        const valueColor = isCredit ? 'text-emerald-600' : 'text-slate-800';
+                        const valuePrefix = isCredit ? '- ' : '';
+                        
                         return `
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all">
-                                <div class="flex-1">
-                                    <p class="font-semibold text-slate-800">${t.description}</p>
-                                    <p class="text-xs text-slate-500 mt-1">
-                                        <i class="fas fa-calendar mr-1"></i>${purchaseDate}
-                                        ${installmentText ? `<span class="ml-3"><i class="fas fa-credit-card mr-1"></i>${installmentText}</span>` : ''}
-                                    </p>
+                            <div class="flex items-center justify-between p-4 ${bgColor} ${hoverBg} rounded-lg transition-all group cursor-pointer" onclick="openTransactionForEdit('${t.id}')">
+                                <div class="flex items-center gap-3 flex-1">
+                                    ${isCredit ? '<div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center"><i class="fas fa-arrow-down text-white text-sm"></i></div>' : ''}
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-slate-800">
+                                            ${t.description} 
+                                            ${isCredit ? '<span class="text-xs text-emerald-600 font-bold ml-2">CRÉDITO</span>' : ''}
+                                            ${t.isSubscription ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 ml-2"><i class="fas fa-sync-alt mr-1"></i>ASSINATURA</span>' : ''}
+                                        </p>
+                                        <p class="text-xs text-slate-500 mt-1">
+                                            <i class="fas fa-calendar mr-1"></i>${purchaseDate}
+                                            ${installmentText ? `<span class="ml-3"><i class="fas fa-credit-card mr-1"></i>${installmentText}</span>` : ''}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="font-bold text-slate-800">${formatCurrency(t.value)}</p>
+                                <div class="flex items-center gap-3">
+                                    <p class="font-bold ${valueColor}">${valuePrefix}${formatCurrency(t.value)}</p>
+                                    <button 
+                                        onclick="event.stopPropagation(); openTransactionForEdit('${t.id}')" 
+                                        class="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                        title="Editar transação"
+                                    >
+                                        <i class="fas fa-pencil-alt text-sm"></i>
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -6177,8 +7791,40 @@
             ui.elements.cardModalMessage.classList.add('hidden');
             ui.elements.modalCard.classList.remove('hidden');
             
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = ui.elements.modalCard.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
+            
             document.getElementById('card-name').focus();
         }
+        
+        /**
+         * Hide card modal with animation
+         */
+        function hideCardModal() {
+            const container = ui.elements.modalCard.querySelector('.modal-container');
+            
+            // Animate out before hiding
+            if (container) {
+                container.classList.remove('active');
+                setTimeout(() => {
+                    ui.elements.modalCard.classList.add('hidden');
+                    ui.elements.formCard.reset();
+                    ui.elements.cardModalMessage.classList.add('hidden');
+                    state.editingCard = null;
+                }, 300);
+            } else {
+                ui.elements.modalCard.classList.add('hidden');
+                ui.elements.formCard.reset();
+                ui.elements.cardModalMessage.classList.add('hidden');
+                state.editingCard = null;
+            }
+        }
+        
+        // Add to ui object
+        ui.hideCardModal = hideCardModal;
 
         /**
          * Open card for editing
@@ -6208,6 +7854,12 @@
             if (selectedColor) selectedColor.classList.remove('hidden');
             
             ui.elements.modalCard.classList.remove('hidden');
+            
+            // Trigger Bottom Sheet animation
+            requestAnimationFrame(() => {
+                const container = ui.elements.modalCard.querySelector('.modal-container');
+                if (container) container.classList.add('active');
+            });
         };
 
         /**
@@ -6419,17 +8071,17 @@
         });
 
         ui.elements.btnCloseCardModal.addEventListener('click', () => {
-            ui.elements.modalCard.classList.add('hidden');
+            ui.hideCardModal();
         });
 
         ui.elements.btnCancelCard.addEventListener('click', () => {
-            ui.elements.modalCard.classList.add('hidden');
+            ui.hideCardModal();
         });
 
         // Close card modal on background click
         ui.elements.modalCard.addEventListener('click', (e) => {
             if (e.target === ui.elements.modalCard) {
-                ui.elements.modalCard.classList.add('hidden');
+                ui.hideCardModal();
             }
         });
 
@@ -6475,9 +8127,8 @@
                 }, cardId);
                 
                 // Success
-                ui.elements.modalCard.classList.add('hidden');
+                ui.hideCardModal();
                 ui.setLoading(false);
-                state.editingCard = null;
                 
             } catch (error) {
                 ui.elements.cardModalMessage.classList.remove('hidden');
@@ -6571,11 +8222,28 @@
                     setupCardListener(user.uid);
                     setupInvoiceListener(user.uid);
                     
-                    // Transition to dashboard
-                    ui.showView('dashboard');
-                    ui.setLoading(false);
+                    // FASE 23: Restaurar estado anterior (view + cartão selecionado)
+                    const lastView = localStorage.getItem('lastView') || 'dashboard';
+                    const lastCardId = localStorage.getItem('lastCardId');
                     
-                    logger.log('🎉 Login completo. Dashboard carregado.');
+                    // Transition to last view
+                    ui.showView(lastView);
+                    
+                    // Se estava na view de cartões E tem um cartão salvo, selecione-o
+                    if (lastView === 'cards' && lastCardId) {
+                        // Aguardar carregamento dos cartões antes de selecionar
+                        setTimeout(() => {
+                            if (state.cards.some(c => c.id === lastCardId)) {
+                                selectCard(lastCardId);
+                                logger.log('🔄 Estado restaurado: cartão', lastCardId);
+                            } else {
+                                logger.warn('⚠️ Cartão salvo não encontrado:', lastCardId);
+                            }
+                        }, 300);
+                    }
+                    
+                    ui.setLoading(false);
+                    logger.log('🎉 Login completo. Estado restaurado:', lastView);
                     
                 } else {
                     // ❌ User is signed out
@@ -6678,6 +8346,15 @@
         
         // Initial view
         ui.setLoading(true);
+        
+        // Safety timeout: if auth takes too long, show login
+        setTimeout(() => {
+            if (state.loading) {
+                logger.warn('⚠️ Timeout de autenticação - mostrando login');
+                ui.setLoading(false);
+                ui.showView('login');
+            }
+        }, 3000); // 3 segundos
         
     </script>
 
